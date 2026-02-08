@@ -16,9 +16,9 @@ export default function Page() {
   const [comments, setComments] = useState<Comment[]>([]);
 
   const loadComments = async () => {
-    const res = await fetch("/api/comments");
-    const data = await res.json();
-    setComments(data);
+    // const res = await fetch("/api/comments");
+    // const data = await res.json();
+    // setComments(data);
   };
 
   useEffect(() => {
@@ -28,15 +28,15 @@ export default function Page() {
   const sendComment = async () => {
     if (!text.trim()) return;
 
-    await fetch("/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        text,
-        parentId: replyTo,
-      }),
-    });
+    // await fetch("/api/comments", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     name,
+    //     text,
+    //     parentId: replyTo,
+    //   }),
+    // });
 
     setText("");
     setReplyTo(null);
