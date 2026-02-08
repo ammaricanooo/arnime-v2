@@ -25,7 +25,7 @@ export default function AppShell({ children }: AppShellProps) {
     }
 
     if (pathname.startsWith('/schedule')) return 'schedule'
-    if (pathname.startsWith('/comments')) return 'comments'
+    // if (pathname.startsWith('/comments')) return 'comments'
     if (pathname.startsWith('/favorites')) return 'favorites'
     if (pathname.startsWith('/watchlist')) return 'watchlist'
 
@@ -49,8 +49,8 @@ export default function AppShell({ children }: AppShellProps) {
       router.push('/?type=complete')
     } else if (tab === 'schedule') {
       router.push('/schedule')
-    } else if (tab === 'comments') {
-      router.push('/comments')
+    // } else if (tab === 'comments') {
+    //   router.push('/comments')
     } else if (tab === 'favorites') {
       router.push('/favorites')
     } else if (tab === 'watchlist') {
