@@ -169,9 +169,9 @@ export default function Home() {
                   <>
                     {currentTab === 'home' && 'Ongoing Anime'}
                     {currentTab === 'complete' && 'Completed Anime'}
-                    {currentTab === 'recent' && 'Recently Added'}
-                    {currentTab === 'favorites' && 'My Favorites'}
-                    {currentTab === 'watchlist' && 'My Watchlist'}
+                    {/* currentTab === 'recent' && 'Recently Added' */}
+                    {/* currentTab === 'favorites' && 'My Favorites' */}
+                    {/* currentTab === 'watchlist' && 'My Watchlist' */}
                   </>
                 )}
           </h1>
