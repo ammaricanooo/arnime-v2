@@ -38,7 +38,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
 
       {/* Sidebar - Full height from top */}
       <aside
-        className={`fixed md:static left-0 top-0 h-screen bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 overflow-y-auto z-40 flex flex-col transition-all duration-300 ${
+        className={`fixed md:static left-0 top-16 h-screen bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 overflow-y-auto z-40 flex flex-col transition-all duration-300 ${
           isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'
         } ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
