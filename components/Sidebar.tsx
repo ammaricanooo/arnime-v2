@@ -15,7 +15,6 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
     { id: 'home', label: 'Home', icon: House },
     { id: 'complete', label: 'Complete', icon: Flame },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
-    // { id: 'comments', label: 'Comments', icon: MessageCircle },
     // { id: 'favorites', label: 'My Favorites', icon: Star },
     // { id: 'watchlist', label: 'Watchlist', icon: Bookmark },
   ]
