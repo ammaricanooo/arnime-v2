@@ -1,65 +1,227 @@
-import Image from "next/image";
+"use client";
+import GenreFilter from "@/components/GenreFilter";
+import ContentGrid from "@/components/ContentGrid";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from 'next/navigation'
+import { Loader2 } from "lucide-react";
+
+interface Genre {
+  name: string
+  slug: string
+}
+
+interface AnimeData {
+  title: string
+  slug: string
+  poster: string
+  current_episode?: string
+  release_day?: string
+  total_episode?: string
+  rating?: string
+  episode_count?: string
+  season?: string
+  studio?: string
+  newest_release_date: string
+}
+
+const MAX_PAGES = 3
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const tabType = searchParams?.get('type') || ''
+  const currentTab = tabType === 'complete' ? 'complete' : 'home'
+  const [selectedGenre, setSelectedGenre] = useState('All')
+  const [genres, setGenres] = useState<string[]>(['All'])
+  const [genreMap, setGenreMap] = useState<{ [key: string]: string }>({})
+  const [animes, setAnimes] = useState<AnimeData[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [likedAnimes, setLikedAnimes] = useState<string[]>([])
+  const [loadingGenres, setLoadingGenres] = useState(true)
+  const observerTarget = useRef<HTMLDivElement>(null)
+
+  // Fetch genres and create slug map
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const { fetchJson } = await import('../lib/fetchJson')
+        const data = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/genre')
+        if (data.result && Array.isArray(data.result)) {
+          const genreNames = ['All', ...data.result.map((genre: Genre) => genre.name)]
+          const slugMap: { [key: string]: string } = {}
+          data.result.forEach((genre: Genre) => {
+            slugMap[genre.name] = genre.slug
+          })
+          setGenres(genreNames)
+          setGenreMap(slugMap)
+        }
+      } catch (error) {
+        console.error('Error fetching genres:', error)
+        setGenres(['All', 'Action', 'Adventure', 'Comedy', 'Drama'])
+      } finally {
+        setLoadingGenres(false)
+      }
+    }
+
+    fetchGenres()
+  }, [])
+
+  // Fetch anime data
+  const fetchAnimes = useCallback(async (page: number, isLoadMore: boolean = false, genre: string = 'All') => {
+    if (page > MAX_PAGES) {
+      setHasMore(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      let url: string
+
+      if (genre && genre !== 'All') {
+        // Fetch by genre
+        const genreSlug = genreMap[genre] || genre.toLowerCase()
+        url = `https://api.ammaricano.my.id/api/otakudesu/animebygenre?genre=${genreSlug}&page=${page}`
+      } else {
+        // Fetch by type (ongoing/complete)
+        const animeType = currentTab === 'home' ? 'ongoing' : 'complete'
+        url = `https://api.ammaricano.my.id/api/otakudesu?type=${animeType}&page=${page}`
+      }
+
+      const { fetchJson } = await import('../lib/fetchJson')
+      const data = await fetchJson(url)
+
+      if (data && data.result && Array.isArray(data.result)) {
+        if (isLoadMore) {
+          setAnimes(prev => [...prev, ...data.result])
+        } else {
+          setAnimes(data.result)
+        }
+
+        if (page >= MAX_PAGES || data.result.length === 0) {
+          setHasMore(false)
+        } else {
+          setHasMore(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching animes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [tabType, genreMap])
+
+  // Fetch animes when activeTab changes
+  useEffect(() => {
+    setCurrentPage(1)
+    setAnimes([])
+    setHasMore(true)
+    setSelectedGenre('All')
+  }, [tabType, fetchAnimes])
+
+  // Handle genre change
+  useEffect(() => {
+    setCurrentPage(1)
+    setAnimes([])
+    setHasMore(true)
+    fetchAnimes(1, false, selectedGenre)
+  }, [selectedGenre, fetchAnimes])
+
+  // Auto infinite scroll with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading && animes.length > 0) {
+          const nextPage = currentPage + 1
+          if (nextPage <= MAX_PAGES) {
+            setCurrentPage(nextPage)
+            fetchAnimes(nextPage, true, selectedGenre)
+          }
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, loading, currentPage, animes.length, selectedGenre, fetchAnimes])
+
+  const handleLike = (slug: string) => {
+    setLikedAnimes(prev =>
+      prev.includes(slug)
+        ? prev.filter(s => s !== slug)
+        : [...prev, slug]
+    )
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                {selectedGenre !== 'All' ? selectedGenre : (
+                  <>
+                    {currentTab === 'home' && 'Ongoing Anime'}
+                    {currentTab === 'complete' && 'Completed Anime'}
+                    {currentTab === 'recent' && 'Recently Added'}
+                    {currentTab === 'favorites' && 'My Favorites'}
+                    {currentTab === 'watchlist' && 'My Watchlist'}
+                  </>
+                )}
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">Browse and discover your favorite anime content</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <GenreFilter
+          genres={genres}
+          selectedGenre={selectedGenre}
+          onSelectGenre={setSelectedGenre}
+        />
+      </div>
+
+      {/* Loading State */}
+      {animes.length === 0 && loading && (
+        <div className="flex items-center justify-center py-24">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <p className="text-slate-600 dark:text-slate-400">Loading anime...</p>
+          </div>
         </div>
-      </main>
-    </div>
-  );
+      )}
+
+      {/* Content Grid */}
+      {animes.length > 0 && (
+        <>
+          <ContentGrid
+            animes={animes}
+            onLike={handleLike}
+            likedAnimes={likedAnimes}
+            type={currentTab === 'home' ? 'ongoing' : 'complete'}
+            loading={loading}
+            hasMore={false}
+          />
+          {/* Infinite scroll observer target */}
+          <div ref={observerTarget} className="flex justify-center py-8 mt-4">
+            {loading && (
+              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Empty State */}
+      {animes.length === 0 && !loading && (
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <p className="text-slate-600 dark:text-slate-400 mb-4">No anime found</p>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
