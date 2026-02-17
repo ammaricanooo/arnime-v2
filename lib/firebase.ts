@@ -1,17 +1,17 @@
 "use client"
 
-import { initializeApp, getApps } from 'firebase/app'
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect, 
-  getRedirectResult,  
-  signOut, 
-  onAuthStateChanged, 
-  type User 
-} from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeApp, getApps } from "firebase/app"
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  onAuthStateChanged,
+  getRedirectResult,
+  type User,
+} from "firebase/auth"
+import { getFirestore } from "firebase/firestore"
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -30,21 +30,21 @@ export const auth = getAuth()
 export const provider = new GoogleAuthProvider()
 export const db = getFirestore()
 
+/**
+ * 🔥 HYBRID LOGIN
+ * Desktop  -> Popup
+ * Mobile   -> Redirect
+ */
 export async function signInWithGoogle() {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isMobile =
+    typeof window !== "undefined" &&
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
   if (isMobile) {
-    return signInWithRedirect(auth, provider);
-  } else {
-    try {
-      return await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      if (error.code === 'auth/popup-blocked') {
-        return signInWithRedirect(auth, provider);
-      }
-      throw error;
-    }
+    return signInWithRedirect(auth, provider)
   }
+
+  return signInWithPopup(auth, provider)
 }
 
 export async function signOutUser() {
@@ -53,4 +53,15 @@ export async function signOutUser() {
 
 export function onAuthChange(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback)
+}
+
+/**
+ * 🔑 WAJIB untuk mobile redirect
+ */
+export async function handleRedirectResult() {
+  try {
+    return await getRedirectResult(auth)
+  } catch (err) {
+    console.error("Redirect error:", err)
+  }
 }
