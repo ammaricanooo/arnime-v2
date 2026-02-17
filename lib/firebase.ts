@@ -1,7 +1,16 @@
 "use client"
 
 import { initializeApp, getApps } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth'
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,  
+  signOut, 
+  onAuthStateChanged, 
+  type User 
+} from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -22,7 +31,20 @@ export const provider = new GoogleAuthProvider()
 export const db = getFirestore()
 
 export async function signInWithGoogle() {
-  return signInWithPopup(auth, provider)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    return signInWithRedirect(auth, provider);
+  } else {
+    try {
+      return await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      if (error.code === 'auth/popup-blocked') {
+        return signInWithRedirect(auth, provider);
+      }
+      throw error;
+    }
+  }
 }
 
 export async function signOutUser() {
