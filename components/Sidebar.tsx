@@ -15,8 +15,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
     { id: 'home', label: 'Home', icon: House },
     { id: 'complete', label: 'Complete', icon: Flame },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
-    // { id: 'favorites', label: 'My Favorites', icon: Star },
-    // { id: 'watchlist', label: 'Watchlist', icon: Bookmark },
+    { id: 'favorites', label: 'Favorites', icon: Star },
+    { id: 'watchhistory', label: 'Watch History', icon: Bookmark },
   ]
 
   const handleTabChange = (tab: string) => {

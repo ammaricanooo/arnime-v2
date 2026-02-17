@@ -51,11 +51,11 @@ export default function WatchPage() {
     if (content && icon) {
       if (content.classList.contains('max-h-0')) {
         content.classList.remove('max-h-0');
-        content.classList.add('max-h-96');
+        content.classList.add('max-h-full');
         icon.classList.add('rotate-180');
       } else {
         content.classList.add('max-h-0');
-        content.classList.remove('max-h-96');
+        content.classList.remove('max-h-full');
         icon.classList.remove('rotate-180');
       }
     }

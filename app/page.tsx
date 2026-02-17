@@ -4,6 +4,10 @@ import ContentGrid from "@/components/ContentGrid";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from "lucide-react";
+import { db } from "@/lib/firebase"; // sesuaikan path
+import { doc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import useAuth from "@/lib/useAuth"; // sesuaikan path
+import Swal from 'sweetalert2'
 
 interface Genre {
   name: string
@@ -27,6 +31,7 @@ interface AnimeData {
 const MAX_PAGES = 3
 
 export default function Home() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const searchParams = useSearchParams()
@@ -42,6 +47,24 @@ export default function Home() {
   const [likedAnimes, setLikedAnimes] = useState<string[]>([])
   const [loadingGenres, setLoadingGenres] = useState(true)
   const observerTarget = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchUserLikes = async () => {
+      if (user) {
+        try {
+          const q = query(collection(db, "bookmarks"), where("userId", "==", user.uid));
+          const querySnapshot = await getDocs(q);
+          const slugs = querySnapshot.docs.map(doc => doc.data().slug);
+          setLikedAnimes(slugs);
+        } catch (error) {
+          console.error("Error fetching likes from Firestore:", error);
+        }
+      } else {
+        setLikedAnimes([]); // Reset jika user logout
+      }
+    };
+    fetchUserLikes();
+  }, [user]);
 
   // Fetch genres and create slug map
   useEffect(() => {
@@ -151,13 +174,49 @@ export default function Home() {
     return () => observer.disconnect()
   }, [hasMore, loading, currentPage, animes.length, selectedGenre, fetchAnimes])
 
-  const handleLike = (slug: string) => {
-    setLikedAnimes(prev =>
-      prev.includes(slug)
-        ? prev.filter(s => s !== slug)
-        : [...prev, slug]
-    )
-  }
+  // HANDLE LIKE (SAVE/DELETE TO FIREBASE)
+  const handleLike = async (slug: string) => {
+    if (!user) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "You need to login first to save your favorite anime!"
+      });
+      return;
+    }
+
+    const isAlreadyLiked = likedAnimes.includes(slug);
+    const docId = `${user.uid}_${slug}`; // ID Unik gabungan User dan Anime
+    const docRef = doc(db, "bookmarks", docId);
+
+    try {
+      if (isAlreadyLiked) {
+        // Hapus dari Firebase (Unlike)
+        await deleteDoc(docRef);
+        setLikedAnimes(prev => prev.filter(s => s !== slug));
+      } else {
+        // Simpan ke Firebase (Like)
+        const animeToSave = animes.find(a => a.slug === slug);
+
+        // Optimistic update (Ubah UI dulu biar kerasa cepet)
+        setLikedAnimes(prev => [...prev, slug]);
+
+        await setDoc(docRef, {
+          userId: user.uid,
+          slug: slug,
+          title: animeToSave?.title || "Unknown Title",
+          poster: animeToSave?.poster || "",
+          type: currentTab === 'complete' ? 'complete' : 'ongoing',
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Firestore Error:", error);
+      // Rollback state jika gagal
+      if (!isAlreadyLiked) setLikedAnimes(prev => prev.filter(s => s !== slug));
+      alert("Gagal menyimpan ke favorit.");
+    }
+  };
 
   return (
     <>
@@ -165,15 +224,15 @@ export default function Home() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                {selectedGenre !== 'All' ? selectedGenre : (
-                  <>
-                    {currentTab === 'home' && 'Ongoing Anime'}
-                    {currentTab === 'complete' && 'Completed Anime'}
-                    {/* currentTab === 'recent' && 'Recently Added' */}
-                    {/* currentTab === 'favorites' && 'My Favorites' */}
-                    {/* currentTab === 'watchlist' && 'My Watchlist' */}
-                  </>
-                )}
+            {selectedGenre !== 'All' ? selectedGenre : (
+              <>
+                {currentTab === 'home' && 'Ongoing Anime'}
+                {currentTab === 'complete' && 'Completed Anime'}
+                {/* currentTab === 'recent' && 'Recently Added' */}
+                {/* currentTab === 'favorites' && 'My Favorites' */}
+                {/* currentTab === 'watchlist' && 'My Watchlist' */}
+              </>
+            )}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">Browse and discover your favorite anime content</p>
         </div>

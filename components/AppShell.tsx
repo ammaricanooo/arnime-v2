@@ -24,9 +24,10 @@ export default function AppShell({ children }: AppShellProps) {
       return type === 'complete' ? 'complete' : 'home'
     }
 
+
     if (pathname.startsWith('/schedule')) return 'schedule'
-    // if (pathname.startsWith('/favorites')) return 'favorites'
-    // if (pathname.startsWith('/watchlist')) return 'watchlist'
+    if (pathname.startsWith('/favorites')) return 'favorites'
+    if (pathname.startsWith('/watchhistory')) return 'watchhistory'
 
     return 'home'
   }
@@ -48,6 +49,10 @@ export default function AppShell({ children }: AppShellProps) {
       router.push('/?type=complete')
     } else if (tab === 'schedule') {
       router.push('/schedule')
+    } else if (tab === 'favorites') {
+      router.push('/favorites')
+    } else if (tab === 'watchhistory') {
+      router.push('/watchhistory')
     }
     if (window.innerWidth < 768) setSidebarOpen(false)
   }

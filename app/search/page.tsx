@@ -109,6 +109,7 @@ export default function SearchPage() {
             {animes.length === 0 && !loading && hasSearched && (
                 <div className="flex items-center justify-center py-24">
                     <div className="text-center">
+                        <img src="NotFound.png" alt="Not Found" className="w-84" />
                         <p className="text-slate-600 dark:text-slate-400 mb-4">
                             No anime found for "{query}"
                         </p>

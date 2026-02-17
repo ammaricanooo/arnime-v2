@@ -32,7 +32,7 @@ export default function GenreFilter({
     <div className="relative w-56" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
       >
         <span className="text-sm font-medium">
           {selectedGenre === 'All' ? 'All Genres' : selectedGenre}
@@ -54,7 +54,7 @@ export default function GenreFilter({
                   onSelectGenre(genre)
                   setIsOpen(false)
                 }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                className={`w-full cursor-pointer text-left px-4 py-2.5 text-sm transition-colors ${
                   selectedGenre === genre
                     ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 font-semibold'
                     : 'text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'

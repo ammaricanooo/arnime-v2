@@ -1,3 +1,5 @@
+import { log } from "node:console"
+
 export async function fetchJson(url: string, init?: RequestInit) {
   const res = await fetch(url, init)
   const text = await res.text()

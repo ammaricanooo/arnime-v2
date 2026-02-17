@@ -1,8 +1,11 @@
 "use client"
 
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Play, Heart, Share2 } from "lucide-react"
+import { ArrowLeft, Play, Heart, Share2, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
+import { db } from "@/lib/firebase";
+import { doc, setDoc, getDoc, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import useAuth from "@/lib/useAuth";
 // Header and Sidebar are provided by AppShell (in app/layout.tsx)
 
 interface EpisodeItem {
@@ -29,6 +32,7 @@ interface DetailResult {
 }
 
 export default function AnimeDetailPage() {
+    const { user } = useAuth();
     const router = useRouter()
     const params = useParams()
     const slug = params.slug as string
@@ -37,6 +41,91 @@ export default function AnimeDetailPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [isLiked, setIsLiked] = useState(false)
+    const [likeLoading, setLikeLoading] = useState(false);
+
+    useEffect(() => {
+    const checkLikeStatus = async () => {
+        // Pastikan USER benar-benar sudah ada
+        if (!user?.uid || !slug) return; 
+
+        try {
+            const docId = `${user.uid}_${slug}`;
+            const docRef = doc(db, "bookmarks", docId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                setIsLiked(true);
+            }
+        } catch (err: any) {
+            // Lihat di console log: apakah error muncul di sini?
+            console.error("Gagal cek status bookmark:", err.code, err.message);
+        }
+    };
+
+    checkLikeStatus();
+}, [user, slug]);
+
+    // 2. Buat fungsi toggle Like
+    const handleToggleLike = async () => {
+        if (!user) {
+            alert("Login dulu bosku untuk simpan ke favorit!");
+            return;
+        }
+        if (!detail) return;
+
+        setLikeLoading(true);
+        const { db } = await import('@/lib/firebase');
+        const { doc, setDoc, deleteDoc } = await import('firebase/firestore');
+        const docId = `${user.uid}_${slug}`;
+        const docRef = doc(db, "bookmarks", docId);
+
+        try {
+            if (isLiked) {
+                await deleteDoc(docRef);
+                setIsLiked(false);
+            } else {
+                await setDoc(docRef, {
+                    userId: user.uid,
+                    slug: slug,
+                    title: detail.title,
+                    poster: detail.poster,
+                    type: detail.status === 'Completed' ? 'complete' : 'ongoing',
+                    createdAt: new Date().toISOString()
+                });
+                setIsLiked(true);
+            }
+        } catch (error) {
+            console.error("Error toggling like:", error);
+        } finally {
+            setLikeLoading(false);
+        }
+    };
+
+    const handleWatchEpisode = async (epSlug: string, epTitle: string) => {
+        const targetUrl = `/anime/${encodeURIComponent(slug)}/watch/${encodeURIComponent(epSlug)}`;
+
+        if (user && detail) {
+            try {
+                // Simpan/Update history berdasarkan Slug Anime
+                // Jadi satu anime cuma punya satu catatan: "Episode terakhir yang ditonton"
+                const historyRef = doc(db, "history", `${user.uid}_${slug}`);
+                await setDoc(historyRef, {
+                    userId: user.uid,
+                    slug: slug, // slug anime
+                    title: detail.title,
+                    poster: detail.poster,
+                    lastEpisodeName: epTitle, // Contoh: "Episode 10"
+                    lastEpisodeSlug: epSlug,
+                    lastWatched: new Date().toISOString(),
+                }, { merge: true }); // Merge agar data lama tidak hilang
+            } catch (err) {
+                console.error("Gagal simpan history:", err);
+            }
+        }
+
+        // Tetap pindah halaman walaupun simpan history gagal/belum login
+        router.push(targetUrl);
+    };
 
     useEffect(() => {
         if (!slug) return
@@ -100,8 +189,20 @@ export default function AnimeDetailPage() {
                 <div className="md:col-span-1">
                     <img src={detail.poster || '/placeholder.svg'} alt={detail.title} className="w-full min-w-40 rounded-lg shadow-lg object-cover aspect-3/4" />
                     <div className="flex gap-3 mt-4">
-                        <button onClick={() => setIsLiked(!isLiked)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
-                            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                        <button
+                            onClick={handleToggleLike}
+                            disabled={likeLoading}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${isLiked
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-indigo-600 text-white'
+                                } hover:opacity-90 disabled:opacity-50`}
+                        >
+                            {likeLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Heart className={`w-5 h-5 ${isLiked ? 'fill-white' : ''}`} />
+                            )}
+                            {/* Opsional: tambahkan teks "Favorite" */}
                         </button>
                         <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium">
                             <Share2 className="w-5 h-5" />
@@ -125,13 +226,13 @@ export default function AnimeDetailPage() {
                     </div>
                     <div className="hidden md:block">
                         <div>
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">Synopsis</h2>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Synopsis</h2>
                             <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                                 {detail.synopsis || 'No synopsis available.'}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 mt-3">
                             <div>
                                 <span className="text-sm text-slate-500 dark:text-slate-400">Studio</span>
                                 <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.studio || '-'}</p>
@@ -153,40 +254,40 @@ export default function AnimeDetailPage() {
                 </div>
             </div>
             <div className="block md:hidden">
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">Synopsis</h2>
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                                {detail.synopsis || 'No synopsis available.'}
-                            </p>
-                        </div>
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">Synopsis</h2>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                        {detail.synopsis || 'No synopsis available.'}
+                    </p>
+                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">Studio</span>
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.studio || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">Release Date</span>
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.release_date || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">Type</span>
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.tipe || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">Duration</span>
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.duration || '-'}</p>
-                            </div>
-                        </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">Studio</span>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.studio || '-'}</p>
                     </div>
+                    <div>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">Release Date</span>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.release_date || '-'}</p>
+                    </div>
+                    <div>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">Type</span>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.tipe || '-'}</p>
+                    </div>
+                    <div>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">Duration</span>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{detail.duration || '-'}</p>
+                    </div>
+                </div>
+            </div>
 
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Episodes</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Episodes</h2>
                 <div className="grid grid-cols-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg gap-4">
                     {episodes.map((ep) => (
                         <button
                             key={ep.slug}
-                            onClick={() => router.push(`/anime/${encodeURIComponent(slug)}/watch/${encodeURIComponent(ep.slug)}`)}
+                            onClick={() => handleWatchEpisode(ep.slug, ep.episode)}
                             className="group relative rounded-lg overflow-hidden bg-white dark:bg-slate-800 hover:bg-indigo-200 dark:hover:bg-indigo-300 transition-all text-left"
                         >
                             <div className="p-3 space-y-2">
@@ -197,7 +298,7 @@ export default function AnimeDetailPage() {
                 </div>
             </div>
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Batch</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Batch</h2>
                 <div className="grid grid-cols-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg gap-4">
                     {batch?.length > 0 ? (
                         batch.map((ep) => (
