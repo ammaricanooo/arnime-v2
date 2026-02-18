@@ -75,7 +75,6 @@ export default function WatchPage() {
 
         if (data && data.result) {
           setEpisode(data.result)
-          // Set first available quality
           const qualities = Object.keys(data.result.mirror || {})
           if (qualities.length > 0) {
             setSelectedQuality(qualities[0])
@@ -99,7 +98,6 @@ export default function WatchPage() {
     setIframeError(null)
     try {
       const { fetchJson } = await import('@/lib/fetchJson')
-      // Get nonce
       const nonceRes = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/nonce')
       const nonce = nonceRes?.result
 
@@ -107,8 +105,6 @@ export default function WatchPage() {
         setIframeError('Failed to get nonce')
         return
       }
-
-      // Get iframe
       const iframeRes = await fetchJson(
         `https://api.ammaricano.my.id/api/otakudesu/getiframe?content=${encodeURIComponent(mirrorContent)}&nonce=${encodeURIComponent(nonce)}`
       )

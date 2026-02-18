@@ -30,11 +30,6 @@ export const auth = getAuth()
 export const provider = new GoogleAuthProvider()
 export const db = getFirestore()
 
-/**
- * 🔥 HYBRID LOGIN
- * Desktop  -> Popup
- * Mobile   -> Redirect
- */
 export async function signInWithGoogle() {
   const isMobile =
     typeof window !== "undefined" &&
@@ -55,9 +50,6 @@ export function onAuthChange(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback)
 }
 
-/**
- * 🔑 WAJIB untuk mobile redirect
- */
 export async function handleRedirectResult() {
   try {
     return await getRedirectResult(auth)

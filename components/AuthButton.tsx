@@ -9,43 +9,47 @@ import Swal from "sweetalert2"
 export default function AuthButton() {
   const { user, loading } = useAuth()
   const [busy, setBusy] = useState(false)
-  const hasShownLoginAlert = useRef(false)
 
-  /* =====================
-     ALERT SETELAH LOGIN
-  ===================== */
   useEffect(() => {
-    if (user && !hasShownLoginAlert.current) {
-      hasShownLoginAlert.current = true
+    if (!user) return
 
-      Swal.fire({
-        title: "Signed in",
-        text: "You have been successfully logged in",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      })
-    }
+    const justLoggedIn = sessionStorage.getItem("justLoggedIn")
+    if (!justLoggedIn) return
 
-    if (!user) {
-      hasShownLoginAlert.current = false
+    sessionStorage.removeItem("justLoggedIn")
+
+    Swal.fire({
+      title: "Signed in",
+      text: "You have been successfully logged in",
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false,
+    })
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      setBusy(false)
     }
   }, [user])
 
-  /* =====================
-     LOGIN (NO TRY/CATCH)
-  ===================== */
   const handleLogin = async () => {
     setBusy(true)
-
-    // ⚠️ JANGAN try/catch
-    // redirect akan reload halaman
-    await signInWithGoogle()
+    try {
+      sessionStorage.setItem("justLoggedIn", "true")
+      await signInWithGoogle()
+    } catch (err) {
+      console.error("Login error", err)
+      sessionStorage.removeItem("justLoggedIn")
+      await Swal.fire({
+        title: "Error",
+        text: "Failed to sign in",
+        icon: "error",
+      })
+      setBusy(false)
+    }
   }
 
-  /* =====================
-     LOGOUT
-  ===================== */
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "Sign out?",
@@ -54,6 +58,8 @@ export default function AuthButton() {
       showCancelButton: true,
       confirmButtonText: "Yes, sign out",
       cancelButtonText: "Cancel",
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#6b7280",
     })
 
     if (!result.isConfirmed) return
@@ -63,9 +69,17 @@ export default function AuthButton() {
       await signOutUser()
       await Swal.fire({
         title: "Signed out",
+        text: "You have been successfully logged out",
         icon: "success",
-        timer: 1200,
+        timer: 1500,
         showConfirmButton: false,
+      })
+    } catch (err) {
+      console.error("Logout error", err)
+      await Swal.fire({
+        title: "Error",
+        text: "Failed to sign out",
+        icon: "error",
       })
     } finally {
       setBusy(false)

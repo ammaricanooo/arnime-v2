@@ -9,15 +9,14 @@ export default function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 🔥 PROSES HASIL REDIRECT (mobile)
-    handleRedirectResult().finally(() => {
-      const unsub = onAuthChange((u) => {
-        setUser(u)
-        setLoading(false)
-      })
+    handleRedirectResult().catch(console.error)
 
-      return () => unsub()
+    const unsub = onAuthChange((u) => {
+      setUser(u)
+      setLoading(false)
     })
+
+    return () => unsub()
   }, [])
 
   return { user, loading }

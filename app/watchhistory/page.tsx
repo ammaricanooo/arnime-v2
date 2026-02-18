@@ -57,7 +57,7 @@ export default function HistoryPage() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Watch History</h1>
           <img src="Forbidden.png" alt="Forbidden" className="w-84" />
           <p className="text-slate-600 dark:text-slate-400">Please login first to see your watch history collection.</p>
@@ -84,7 +84,7 @@ export default function HistoryPage() {
           variant="history"
         />
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
           <img src="NotFound.png" alt="Not Found" className="w-84" />
           <p className="text-slate-600 dark:text-slate-400">Watch history is still empty.</p>
         </div>

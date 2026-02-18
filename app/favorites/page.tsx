@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase"; // sesuaikan path
+import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
-import useAuth from "@/lib/useAuth"; // sesuaikan path
+import useAuth from "@/lib/useAuth";
 import ContentGrid from "@/components/ContentGrid";
 import { Loader2, HeartOff } from "lucide-react";
 
@@ -11,8 +11,6 @@ export default function FavoritesPage() {
   const { user, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // 1. Fungsi untuk mengambil data dari Firestore
   const fetchFavorites = async () => {
     if (!user) return;
     
@@ -38,22 +36,18 @@ export default function FavoritesPage() {
     }
   }, [user, authLoading]);
 
-  // 2. Fungsi untuk handle "Unlike" di halaman favorit
   const handleUnlike = async (slug: string) => {
     if (!user) return;
 
     try {
       const docId = `${user.uid}_${slug}`;
       await deleteDoc(doc(db, "bookmarks", docId));
-      
-      // Update UI secara lokal
       setFavorites(prev => prev.filter(anime => anime.slug !== slug));
     } catch (error) {
       console.error("Gagal menghapus favorit:", error);
     }
   };
 
-  // State: Loading Auth
   if (authLoading) {
     return (
       <div className="flex justify-center py-20">
@@ -65,7 +59,7 @@ export default function FavoritesPage() {
   // State: Belum Login
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">My Favorites</h1>
           <img src="Forbidden.png" alt="Forbidden" className="w-84" />
           <p className="text-slate-600 dark:text-slate-400">Please login first to see your favorite collection.</p>
@@ -95,7 +89,7 @@ export default function FavoritesPage() {
           hasMore={false}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
           <img src="NotFound.png" alt="Not Found" className="w-84" />
           <p className="text-slate-600 dark:text-slate-400">There is no anime that you like yet.</p>
         </div>

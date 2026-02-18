@@ -4,9 +4,9 @@ import ContentGrid from "@/components/ContentGrid";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from "lucide-react";
-import { db } from "@/lib/firebase"; // sesuaikan path
+import { db } from "@/lib/firebase";
 import { doc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
-import useAuth from "@/lib/useAuth"; // sesuaikan path
+import useAuth from "@/lib/useAuth";
 import Swal from 'sweetalert2'
 
 interface Genre {
@@ -60,13 +60,12 @@ export default function Home() {
           console.error("Error fetching likes from Firestore:", error);
         }
       } else {
-        setLikedAnimes([]); // Reset jika user logout
+        setLikedAnimes([]);
       }
     };
     fetchUserLikes();
   }, [user]);
 
-  // Fetch genres and create slug map
   useEffect(() => {
     const fetchGenres = async () => {
       try {
@@ -92,7 +91,6 @@ export default function Home() {
     fetchGenres()
   }, [])
 
-  // Fetch anime data
   const fetchAnimes = useCallback(async (page: number, isLoadMore: boolean = false, genre: string = 'All') => {
     if (page > MAX_PAGES) {
       setHasMore(false)
@@ -104,11 +102,9 @@ export default function Home() {
       let url: string
 
       if (genre && genre !== 'All') {
-        // Fetch by genre
         const genreSlug = genreMap[genre] || genre.toLowerCase()
         url = `https://api.ammaricano.my.id/api/otakudesu/animebygenre?genre=${genreSlug}&page=${page}`
       } else {
-        // Fetch by type (ongoing/complete)
         const animeType = currentTab === 'home' ? 'ongoing' : 'complete'
         url = `https://api.ammaricano.my.id/api/otakudesu?type=${animeType}&page=${page}`
       }
@@ -136,7 +132,6 @@ export default function Home() {
     }
   }, [tabType, genreMap])
 
-  // Fetch animes when activeTab changes
   useEffect(() => {
     setCurrentPage(1)
     setAnimes([])
@@ -144,7 +139,6 @@ export default function Home() {
     setSelectedGenre('All')
   }, [tabType, fetchAnimes])
 
-  // Handle genre change
   useEffect(() => {
     setCurrentPage(1)
     setAnimes([])
@@ -152,7 +146,6 @@ export default function Home() {
     fetchAnimes(1, false, selectedGenre)
   }, [selectedGenre, fetchAnimes])
 
-  // Auto infinite scroll with Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -174,7 +167,6 @@ export default function Home() {
     return () => observer.disconnect()
   }, [hasMore, loading, currentPage, animes.length, selectedGenre, fetchAnimes])
 
-  // HANDLE LIKE (SAVE/DELETE TO FIREBASE)
   const handleLike = async (slug: string) => {
     if (!user) {
       Swal.fire({
@@ -186,19 +178,16 @@ export default function Home() {
     }
 
     const isAlreadyLiked = likedAnimes.includes(slug);
-    const docId = `${user.uid}_${slug}`; // ID Unik gabungan User dan Anime
+    const docId = `${user.uid}_${slug}`;
     const docRef = doc(db, "bookmarks", docId);
 
     try {
       if (isAlreadyLiked) {
-        // Hapus dari Firebase (Unlike)
         await deleteDoc(docRef);
         setLikedAnimes(prev => prev.filter(s => s !== slug));
       } else {
-        // Simpan ke Firebase (Like)
         const animeToSave = animes.find(a => a.slug === slug);
 
-        // Optimistic update (Ubah UI dulu biar kerasa cepet)
         setLikedAnimes(prev => [...prev, slug]);
 
         await setDoc(docRef, {
@@ -212,7 +201,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Firestore Error:", error);
-      // Rollback state jika gagal
       if (!isAlreadyLiked) setLikedAnimes(prev => prev.filter(s => s !== slug));
       alert("Gagal menyimpan ke favorit.");
     }
@@ -220,7 +208,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
@@ -228,9 +215,6 @@ export default function Home() {
               <>
                 {currentTab === 'home' && 'Ongoing Anime'}
                 {currentTab === 'complete' && 'Completed Anime'}
-                {/* currentTab === 'recent' && 'Recently Added' */}
-                {/* currentTab === 'favorites' && 'My Favorites' */}
-                {/* currentTab === 'watchlist' && 'My Watchlist' */}
               </>
             )}
           </h1>
@@ -243,7 +227,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Loading State */}
       {animes.length === 0 && loading && (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-4">
@@ -253,7 +236,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Content Grid */}
       {animes.length > 0 && (
         <>
           <ContentGrid
@@ -264,7 +246,6 @@ export default function Home() {
             loading={loading}
             hasMore={false}
           />
-          {/* Infinite scroll observer target */}
           <div ref={observerTarget} className="flex justify-center py-8 mt-4">
             {loading && (
               <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
@@ -273,7 +254,6 @@ export default function Home() {
         </>
       )}
 
-      {/* Empty State */}
       {animes.length === 0 && !loading && (
         <div className="flex items-center justify-center py-24">
           <div className="text-center">
