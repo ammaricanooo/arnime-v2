@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import AnimeDetailClient from "./AnimeDetail.client"
+import AnimeClientPage from "./AnimeClientPage"
 
 interface Props {
   params: Promise<{
@@ -7,13 +7,10 @@ interface Props {
   }>
 }
 
-/* =========================
-   🔥 DYNAMIC META TAG (FIXED)
-========================= */
 export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
-  const { slug } = await params   // ✅ WAJIB await
+  const { slug } = await params
 
   try {
     const res = await fetch(
@@ -68,10 +65,7 @@ export async function generateMetadata(
   }
 }
 
-/* =========================
-   SERVER PAGE
-========================= */
 export default async function Page({ params }: Props) {
-  const { slug } = await params   // ✅ WAJIB await
-  return <AnimeDetailClient slug={slug} />
+  const { slug } = await params
+  return <AnimeClientPage slug={slug} />
 }

@@ -32,8 +32,6 @@ const MAX_PAGES = 3
 
 export default function Home() {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const searchParams = useSearchParams()
   const tabType = searchParams?.get('type') || ''
   const currentTab = tabType === 'complete' ? 'complete' : 'home'
@@ -42,10 +40,10 @@ export default function Home() {
   const [genreMap, setGenreMap] = useState<{ [key: string]: string }>({})
   const [animes, setAnimes] = useState<AnimeData[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingGenres, setLoadingGenres] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [likedAnimes, setLikedAnimes] = useState<string[]>([])
-  const [loadingGenres, setLoadingGenres] = useState(true)
   const observerTarget = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -100,7 +98,6 @@ export default function Home() {
     setLoading(true)
     try {
       let url: string
-
       if (genre && genre !== 'All') {
         const genreSlug = genreMap[genre] || genre.toLowerCase()
         url = `https://api.ammaricano.my.id/api/otakudesu/animebygenre?genre=${genreSlug}&page=${page}`
@@ -118,19 +115,14 @@ export default function Home() {
         } else {
           setAnimes(data.result)
         }
-
-        if (page >= MAX_PAGES || data.result.length === 0) {
-          setHasMore(false)
-        } else {
-          setHasMore(true)
-        }
+        setHasMore(page < MAX_PAGES && data.result.length > 0)
       }
     } catch (error) {
       console.error('Error fetching animes:', error)
     } finally {
       setLoading(false)
     }
-  }, [tabType, genreMap])
+  }, [tabType, genreMap, currentTab])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -159,11 +151,7 @@ export default function Home() {
       },
       { threshold: 0.1 }
     )
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
-    }
-
+    if (observerTarget.current) observer.observe(observerTarget.current)
     return () => observer.disconnect()
   }, [hasMore, loading, currentPage, animes.length, selectedGenre, fetchAnimes])
 
@@ -209,56 +197,63 @@ export default function Home() {
   return (
     <>
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            {selectedGenre !== 'All' ? selectedGenre : (
-              <>
-                {currentTab === 'home' && 'Ongoing Anime'}
-                {currentTab === 'complete' && 'Completed Anime'}
-              </>
-            )}
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">Browse and discover your favorite anime content</p>
+        <div className="w-full md:w-auto">
+          {/* Skeleton untuk Judul */}
+          {loading && animes.length === 0 ? (
+            <div className="animate-pulse space-y-2">
+              <div className="h-8 md:h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+              <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800/50 rounded" />
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                {selectedGenre !== 'All' ? selectedGenre : (
+                  currentTab === 'home' ? 'Ongoing Anime' : 'Completed Anime'
+                )}
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
+                Browse and discover your favorite anime content
+              </p>
+            </>
+          )}
         </div>
-        <GenreFilter
-          genres={genres}
-          selectedGenre={selectedGenre}
-          onSelectGenre={setSelectedGenre}
-        />
+
+        {/* Skeleton untuk Genre Filter */}
+        {loadingGenres ? (
+          <div className="flex gap-2 animate-pulse overflow-hidden w-full md:w-auto">
+              <div className="h-10 w-50 bg-slate-200 dark:bg-slate-800 rounded shrink-0" />
+          </div>
+        ) : (
+          <GenreFilter
+            genres={genres}
+            selectedGenre={selectedGenre}
+            onSelectGenre={setSelectedGenre}
+          />
+        )}
       </div>
 
-      {animes.length === 0 && loading && (
-        <div className="flex items-center justify-center py-24">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-            <p className="text-slate-600 dark:text-slate-400">Loading anime...</p>
-          </div>
-        </div>
-      )}
+      <ContentGrid
+        animes={animes}
+        onLike={handleLike}
+        likedAnimes={likedAnimes}
+        type={currentTab === 'home' ? 'ongoing' : 'complete'}
+        loading={loading}
+        hasMore={false} // Kita pakai observerTarget di bawah untuk infinite scroll
+      />
 
-      {animes.length > 0 && (
-        <>
-          <ContentGrid
-            animes={animes}
-            onLike={handleLike}
-            likedAnimes={likedAnimes}
-            type={currentTab === 'home' ? 'ongoing' : 'complete'}
-            loading={loading}
-            hasMore={false}
-          />
-          <div ref={observerTarget} className="flex justify-center py-8 mt-4">
-            {loading && (
-              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-            )}
+      {/* Target untuk Infinite Scroll */}
+      <div ref={observerTarget} className="flex justify-center py-12">
+        {loading && animes.length > 0 && (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+            <p className="text-xs text-slate-500 animate-pulse font-medium">Memuat lebih banyak...</p>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      {animes.length === 0 && !loading && (
-        <div className="flex items-center justify-center py-24">
-          <div className="text-center">
-            <p className="text-slate-600 dark:text-slate-400 mb-4">No anime found</p>
-          </div>
+      {!loading && animes.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <p className="text-slate-600 dark:text-slate-400 mb-4">No anime found</p>
         </div>
       )}
     </>
