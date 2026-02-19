@@ -18,7 +18,7 @@ interface AnimeData {
 export default function SearchPage() {
     const searchParams = useSearchParams()
     const query = searchParams?.get('q') || ''
-    
+
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [activeTab, setActiveTab] = useState('')
     const [animes, setAnimes] = useState<AnimeData[]>([])
@@ -31,6 +31,7 @@ export default function SearchPage() {
         if (!query || query.trim() === '') {
             setAnimes([])
             setHasSearched(false)
+            setLoading(false) // Pastikan loading false jika query kosong
             return
         }
 
@@ -71,39 +72,38 @@ export default function SearchPage() {
         <>
             {/* Header Section */}
             <div className="flex flex-col items-start mb-8">
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                    {query ? `Search Results for "${query}"` : 'Search Anime'}
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
-                    {hasSearched && animes.length > 0 
-                        ? `Found ${animes.length} anime`
-                        : hasSearched && animes.length === 0
-                        ? 'No results found'
-                        : 'Enter an anime title to search'}
-                </p>
+                {loading ? (
+                    // SKELETON HEADER
+                    <div className="animate-pulse space-y-3 w-full">
+                        <div className="h-8 md:h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                        <div className="h-4 w-40 bg-slate-100 dark:bg-slate-800/50 rounded" />
+                    </div>
+                ) : (
+                    // REAL CONTENT
+                    <>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                            {query ? `Search Results for "${query}"` : 'Search Anime'}
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
+                            {hasSearched && animes.length > 0
+                                ? `Found ${animes.length} anime`
+                                : hasSearched && animes.length === 0
+                                    ? 'No results found'
+                                    : 'Enter an anime title to search'}
+                        </p>
+                    </>
+                )}
             </div>
 
-            {/* Loading State */}
-            {loading && (
-                <div className="flex items-center justify-center py-24">
-                    <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-                        <p className="text-slate-600 dark:text-slate-400">Searching anime...</p>
-                    </div>
-                </div>
-            )}
-
             {/* Content Grid */}
-            {animes.length > 0 && !loading && (
-                <ContentGrid
-                    animes={animes}
-                    onLike={handleLike}
-                    likedAnimes={likedAnimes}
-                    type="complete"
-                    loading={loading}
-                    hasMore={false}
-                />
-            )}
+            <ContentGrid
+                animes={animes}
+                onLike={handleLike}
+                likedAnimes={likedAnimes}
+                type="complete"
+                loading={loading}
+                hasMore={false}
+            />
 
             {/* Empty State */}
             {animes.length === 0 && !loading && hasSearched && (

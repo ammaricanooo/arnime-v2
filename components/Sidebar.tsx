@@ -1,6 +1,6 @@
 'use client'
 
-import { House, Flame, Star, Bookmark, MessageCircle, Calendar, X } from 'lucide-react'
+import { House, Flame, Star, History, MessageCircle, Calendar, X } from 'lucide-react'
 
 interface SidebarProps {
   activeTab: string
@@ -16,7 +16,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
     { id: 'complete', label: 'Complete', icon: Flame },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'favorites', label: 'Favorites', icon: Star },
-    { id: 'watchhistory', label: 'Watch History', icon: Bookmark },
+    { id: 'watchhistory', label: 'Watch History', icon: History },
   ]
 
   const handleTabChange = (tab: string) => {

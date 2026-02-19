@@ -36,7 +36,7 @@ export async function signInWithGoogle() {
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
   if (isMobile) {
-    return signInWithRedirect(auth, provider)
+    return signInWithPopup(auth, provider)
   }
 
   return signInWithPopup(auth, provider)

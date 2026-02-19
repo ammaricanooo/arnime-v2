@@ -39,7 +39,7 @@ export default function Home() {
   const [genres, setGenres] = useState<string[]>(['All'])
   const [genreMap, setGenreMap] = useState<{ [key: string]: string }>({})
   const [animes, setAnimes] = useState<AnimeData[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [loadingGenres, setLoadingGenres] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
