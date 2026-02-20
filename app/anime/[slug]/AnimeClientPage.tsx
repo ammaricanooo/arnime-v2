@@ -280,7 +280,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
                 >
                   <PlayCircle className="w-8 h-8 text-slate-300 group-hover:text-indigo-600 transition-colors shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-400 uppercase">Eps {detail.episodes!.length - idx}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Eps {idx + 1}</p>
                     <p className="text-sm font-semibold truncate text-slate-700 dark:text-slate-200">{ep.episode}</p>
                   </div>
                 </button>
