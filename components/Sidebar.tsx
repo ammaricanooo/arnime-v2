@@ -222,7 +222,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
             <button
               onClick={handleLogin}
               disabled={busy}
-              className="flex items-center gap-3 px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition disabled:opacity-60 w-full h-13"
+              className="flex items-center gap-3 px-3 py-2 bg-white border-t border-gray-200 hover:bg-gray-50 transition disabled:opacity-60 w-full h-13"
             >
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600">
                 <LogIn className="w-5 h-5" />
