@@ -3,7 +3,6 @@
 import { Search, PanelLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import AuthButton from './AuthButton'
 
 interface HeaderProps {
     searchQuery: string
@@ -49,7 +48,7 @@ export default function Header({ searchQuery, onSearchChange, onMenuToggle, onSi
                     </button>
 
                     {/* Search Bar */}
-                    <form onSubmit={handleSearch} className="flex-1 max-w-sm md:max-w-xl">
+                    <form onSubmit={handleSearch} className="flex-1 max-w-xl">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                             <input
@@ -66,12 +65,6 @@ export default function Header({ searchQuery, onSearchChange, onMenuToggle, onSi
                             />
                         </div>
                     </form>
-                </div>
-
-                <div className="flex items-center gap-2 md:gap-3 shrink-0">
-                    <div className="block">
-                        <AuthButton />
-                    </div>
                 </div>
             </div>
         </header>
