@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 export async function GET(
-    req: Request,
-    { params }: { params: { genre: string } }
+    request: NextRequest,
+    { params }: { params: Promise<{ genre: string }> }
 ) {
     try {
-        const { genre } = params;
-        const { searchParams } = new URL(req.url);
+        const { genre } = await params;
+        const { searchParams } = new URL(request.url);
         const page = searchParams.get('page') || "1";
 
         if (!genre) {
