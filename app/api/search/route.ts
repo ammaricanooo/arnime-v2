@@ -15,12 +15,23 @@ export async function GET(req: Request) {
             }, { status: 400 });
         }
 
-        const BASE_URL = "https://otakudesu.blog";
+        const BASE_URL = "https://cors.eu.org/https://otakudesu.blog";
         const targetUrl = `${BASE_URL}/?s=${encodeURIComponent(query)}&post_type=anime`;
 
         const { data: html } = await axios.get(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+      "accept-language": "id-ID",
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+      "sec-ch-ua": '"Chromium";v="127", "Not)A;Brand";v="99"',
+      "sec-ch-ua-mobile": "?1",
+      "sec-ch-ua-platform": '"Android"',
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
+      "upgrade-insecure-requests": "1",
+      "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36"
             }
         });
 

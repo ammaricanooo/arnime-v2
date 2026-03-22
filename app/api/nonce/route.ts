@@ -13,7 +13,7 @@ interface ApiResponse {
 
 export async function GET(req: Request) {
   try {
-    const BASE_URL = "https://otakudesu.blog";
+    const BASE_URL = "https://cors.eu.org/https://otakudesu.blog";
     const formData = new FormData();
     
     // Action ID ini biasanya dinamis, pastikan masih valid
