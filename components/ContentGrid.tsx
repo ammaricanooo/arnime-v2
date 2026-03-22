@@ -14,6 +14,8 @@ interface Anime {
   newest_release_date?: string
   lastEpisodeName?: string
   lastEpisodeSlug?: string
+  type?: string
+  source?: string
 }
 
 interface ContentGridProps {
@@ -55,7 +57,7 @@ export default function ContentGrid({
       return { badge: anime.rating, badgeColor: 'bg-amber-500' } // Kuning emas untuk rating
     }
     if (anime.total_episode) {
-      return { badge: `${anime.total_episode} Ep`, badgeColor: 'bg-indigo-600' }
+      return { badge: `${anime.total_episode}`, badgeColor: 'bg-indigo-600' }
     }
     return { badge: 'N/A', badgeColor: 'bg-slate-600' }
   }
@@ -76,6 +78,11 @@ export default function ContentGrid({
               <div
                 key={anime.slug}
                 onClick={() => {
+                  if (anime.source === 'animasu') {
+                    router.push(`/animasu/${anime.slug}`)
+                    return
+                  }
+
                   if (variant === 'history' && anime.lastEpisodeSlug) {
                     router.push(`/anime/${anime.slug}/watch/${anime.lastEpisodeSlug}`)
                   } else {
@@ -92,7 +99,6 @@ export default function ContentGrid({
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
-                  
                   {/* Overlay Gradient Lebih Halus */}
                   <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-transparent to-transparent opacity-80" />
 
@@ -131,8 +137,11 @@ export default function ContentGrid({
                     <h3 className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-indigo-300 transition-colors">
                       {anime.title}
                     </h3>
-                    
-                    {anime.lastEpisodeName ? (
+                    {anime.source === 'animasu' ? (
+                      <p className="text-[10px] text-slate-300 font-medium opacity-80">
+                        {anime.type || 'Unknown'} - Animasu
+                      </p>
+                    ) : anime.lastEpisodeName ? (
                       <p className="text-[10px] text-indigo-300 font-bold flex items-center gap-1 uppercase tracking-tighter">
                         <span className="w-1 h-1 bg-indigo-400 rounded-full animate-ping" />
                         Lanjut: {anime.lastEpisodeName}

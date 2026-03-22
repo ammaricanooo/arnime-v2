@@ -33,7 +33,7 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
       setLoading(true)
       try {
         const { fetchJson } = await import('@/lib/fetchJson')
-        const res = await fetchJson(`https://api.ammaricano.my.id/api/otakudesu/lengkap/${encodeURIComponent(full)}`)
+        const res = await fetchJson(`/api/full/${encodeURIComponent(full)}`)
 
         if (res?.result && res?.result.lengkap) {
           setData(res.result)

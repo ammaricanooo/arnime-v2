@@ -14,7 +14,7 @@ export async function generateMetadata(
 
   try {
     const res = await fetch(
-      `https://api.ammaricano.my.id/api/otakudesu/detail/${encodeURIComponent(slug)}`,
+      `/api/detail/${encodeURIComponent(slug)}`,
       { cache: "no-store" }
     )
 

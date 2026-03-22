@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Calendar, ChevronRight, Info } from 'lucide-react'
 
 interface ScheduleAnime {
-    judul: string
+    title: string
     slug: string
 }
 
@@ -47,7 +47,7 @@ export default function SchedulePage() {
             setError(null)
             try {
                 const { fetchJson } = await import('@/lib/fetchJson')
-                const data = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/schedule')
+                const data = await fetchJson('/api/schedule')
 
                 if (data && data.result && Array.isArray(data.result)) {
                     setSchedule(data.result)
@@ -125,7 +125,7 @@ export default function SchedulePage() {
                                             className="w-full px-5 py-4 text-left flex items-center justify-between group hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all"
                                         >
                                             <span className="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 leading-snug">
-                                                {anime.judul}
+                                                {anime.title}
                                             </span>
                                             <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all shrink-0" />
                                         </button>

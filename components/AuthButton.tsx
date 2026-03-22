@@ -10,8 +10,6 @@ export default function AuthButton() {
   const { user, loading } = useAuth()
   const [busy, setBusy] = useState(false)
 
-  console.log("AuthButton render, user:", user)
-
   useEffect(() => {
     if (!user) return
 

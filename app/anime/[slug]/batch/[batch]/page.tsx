@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { batch } = await params; // use batch slug for metadata
   try {
     const res = await fetch(
-      `https://api.ammaricano.my.id/api/otakudesu/batch/${encodeURIComponent(batch)}`
+      `/api/batch/${encodeURIComponent(batch)}`
     );
     const json = await res.json();
     const data = json?.result;

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     const res = await fetch(
-      `https://api.ammaricano.my.id/api/otakudesu/episode/${encodeURIComponent(episode)}`,
+      `/api/episode/${encodeURIComponent(episode)}`,
       { next: { revalidate: 3600 } } // Cache 1 jam lebih baik untuk SEO & Performance
     );
     const json = await res.json();

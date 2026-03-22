@@ -37,7 +37,7 @@ export default function BatchClientPage({ slug, batch: batchSlug }: BatchProps) 
       setLoading(true)
       try {
         const { fetchJson } = await import('@/lib/fetchJson')
-        const res = await fetchJson(`https://api.ammaricano.my.id/api/otakudesu/batch/${encodeURIComponent(batchSlug)}`)
+        const res = await fetchJson(`/api/batch/${encodeURIComponent(batchSlug)}`)
 
         if (res?.result) {
           setData(res.result)

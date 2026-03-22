@@ -20,8 +20,6 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
   const [busy, setBusy] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  console.log(user);
-  
 
   // close dropdown kalau klik luar
   useEffect(() => {

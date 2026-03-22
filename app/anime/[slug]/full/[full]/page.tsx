@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { full } = await params; // use full slug for metadata
     try {
         const res = await fetch(
-            `https://api.ammaricano.my.id/api/otakudesu/lengkap/${encodeURIComponent(full)}`
+            `/api/full/${encodeURIComponent(full)}`
         );
         const json = await res.json();
         const data = json?.result;

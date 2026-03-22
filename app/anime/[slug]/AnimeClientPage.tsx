@@ -70,7 +70,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
       setLoading(true)
       try {
         const { fetchJson } = await import("../../../lib/fetchJson")
-        const json = await fetchJson(`https://api.ammaricano.my.id/api/otakudesu/detail/${encodeURIComponent(slug)}`)
+        const json = await fetchJson(`/api/detail/${encodeURIComponent(slug)}`)
         if (json?.result) setDetail(json.result)
         else setError("Anime tidak ditemukan")
       } catch (err: any) {
@@ -272,7 +272,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
           <div className="space-y-4 pt-4">
             <h3 className="text-xl font-bold">Daftar Episode</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {detail.episodes?.map((ep, idx) => (
+              {[...(detail.episodes || [])].reverse().map((ep, idx) => (
                 <button
                   key={ep.slug}
                   onClick={() => handleWatchEpisode(ep.slug, ep.episode)}

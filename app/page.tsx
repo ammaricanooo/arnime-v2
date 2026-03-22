@@ -68,7 +68,7 @@ export default function Home() {
     const fetchGenres = async () => {
       try {
         const { fetchJson } = await import('../lib/fetchJson')
-        const data = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/genre')
+        const data = await fetchJson('/api/genre')
         if (data.result && Array.isArray(data.result)) {
           const genreNames = ['All', ...data.result.map((genre: Genre) => genre.name)]
           const slugMap: { [key: string]: string } = {}
@@ -100,10 +100,10 @@ export default function Home() {
       let url: string
       if (genre && genre !== 'All') {
         const genreSlug = genreMap[genre] || genre.toLowerCase()
-        url = `https://api.ammaricano.my.id/api/otakudesu/animebygenre?genre=${genreSlug}&page=${page}`
+        url = `/api/animebygenre?genre=${genreSlug}&page=${page}`
       } else {
         const animeType = currentTab === 'home' ? 'ongoing' : 'complete'
-        url = `https://api.ammaricano.my.id/api/otakudesu?type=${animeType}&page=${page}`
+        url = `/api/otakudesu?type=${animeType}&page=${page}`
       }
 
       const { fetchJson } = await import('../lib/fetchJson')

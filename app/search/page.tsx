@@ -7,12 +7,14 @@ import { useSearchParams } from "next/navigation";
 interface AnimeData {
     title: string
     slug: string
+    type?: string
     poster: string
     rating?: string
     current_episode?: string
     release_day?: string
     total_episode?: string
     newest_release_date?: string
+    source?: string // 'otakudesu' | 'animasu'
 }
 
 export default function SearchPage() {
@@ -26,27 +28,86 @@ export default function SearchPage() {
     const [likedAnimes, setLikedAnimes] = useState<string[]>([])
     const [hasSearched, setHasSearched] = useState(false)
 
-    // Fetch anime data
+    const cleanTitle = (title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/sub\s*indo|episode|lengkap|batch|tv|bd|season|movie/gi, '') // Hapus kata umum
+            .replace(/[^a-z0-9]/gi, '') // Hapus simbol dan spasi
+            .trim();
+    };
+
+    // Fetch anime data from both sources
     const fetchSearchResults = useCallback(async () => {
         if (!query || query.trim() === '') {
             setAnimes([])
             setHasSearched(false)
-            setLoading(false) // Pastikan loading false jika query kosong
+            setLoading(false)
             return
         }
 
         setLoading(true)
         setHasSearched(true)
         try {
-            const url = `https://api.ammaricano.my.id/api/otakudesu/search?query=${encodeURIComponent(query)}`
             const { fetchJson } = await import('../../lib/fetchJson')
-            const data = await fetchJson(url)
-
-            if (data && data.result && Array.isArray(data.result)) {
-                setAnimes(data.result)
-            } else {
-                setAnimes([])
+            // Otakudesu
+            const otakudesuUrl = `/api/search?q=${encodeURIComponent(query)}`
+            let otakudesuResults: AnimeData[] = []
+            try {
+                const data = await fetchJson(otakudesuUrl)
+                if (data && data.result && Array.isArray(data.result)) {
+                    otakudesuResults = data.result.map((item: any) => (item))
+                }
+            } catch (err) {
+                console.error('Otakudesu search error:', err)
             }
+
+            // Animasu
+            const animasuUrl = `/api/animasu/search?query=${encodeURIComponent(query)}`
+            let animasuResults: AnimeData[] = []
+            try {
+                const data = await fetchJson(animasuUrl)
+                if (data && data.result && Array.isArray(data.result)) {
+                    animasuResults = data.result.map((item: any) => ({
+                        title: item.title,
+                        slug: item.slug,
+                        type: item.type,
+                        poster: item.thumb,
+                        rating: undefined,
+                        current_episode: undefined,
+                        release_day: undefined,
+                        total_episode: item.episode,
+                        newest_release_date: undefined,
+                        source: 'animasu',
+                    }))
+                }
+            } catch (err) {
+                console.error('Animasu search error:', err)
+            }
+
+            // --- Merge & Smart Deduplication ---
+            const merged = [...otakudesuResults];
+
+            animasuResults.forEach((animasuItem) => {
+                const cleanedAnimasu = cleanTitle(animasuItem.title);
+
+                // Cek apakah judul Animasu mirip dengan salah satu di Otakudesu
+                const isSimilar = otakudesuResults.some((otakuItem) => {
+                    const cleanedOtaku = cleanTitle(otakuItem.title);
+
+                    // Cek apakah salah satu judul mengandung yang lain (Partial Match)
+                    return (
+                        cleanedOtaku.includes(cleanedAnimasu) ||
+                        cleanedAnimasu.includes(cleanedOtaku) ||
+                        otakuItem.slug === animasuItem.slug // Tetap cek slug sebagai cadangan
+                    );
+                });
+
+                if (!isSimilar) {
+                    merged.push(animasuItem);
+                }
+            });
+
+            setAnimes(merged);
         } catch (error) {
             console.error('Error fetching search results:', error)
             setAnimes([])
