@@ -13,6 +13,7 @@ interface AnimeData {
     release_day?: string
     total_episode?: string
     newest_release_date?: string
+    source?: 'animasu'
 }
 
 export default function SearchPage() {
@@ -26,27 +27,65 @@ export default function SearchPage() {
     const [likedAnimes, setLikedAnimes] = useState<string[]>([])
     const [hasSearched, setHasSearched] = useState(false)
 
-    // Fetch anime data
+    // Fetch anime data from both otakudesu and animasu
     const fetchSearchResults = useCallback(async () => {
         if (!query || query.trim() === '') {
             setAnimes([])
             setHasSearched(false)
-            setLoading(false) // Pastikan loading false jika query kosong
+            setLoading(false)
             return
         }
 
         setLoading(true)
         setHasSearched(true)
         try {
-            const url = `https://api.ammaricano.my.id/api/otakudesu/search?query=${encodeURIComponent(query)}`
             const { fetchJson } = await import('../../lib/fetchJson')
-            const data = await fetchJson(url)
-
-            if (data && data.result && Array.isArray(data.result)) {
-                setAnimes(data.result)
-            } else {
-                setAnimes([])
+            // Otakudesu
+            const otakudesuUrl = `https://api.ammaricano.my.id/api/otakudesu/search?query=${encodeURIComponent(query)}`
+            let otakudesuResults: AnimeData[] = []
+            try {
+                const data = await fetchJson(otakudesuUrl)
+                if (data && data.result && Array.isArray(data.result)) {
+                    otakudesuResults = data.result
+                }
+            } catch (err) {
+                console.error('Otakudesu search error:', err)
             }
+
+            // Animasu
+            const animasuUrl = `https://api.ammaricano.my.id/api/animasu/search?query=${encodeURIComponent(query)}`
+            let animasuResults: AnimeData[] = []
+            try {
+                const data = await fetchJson(animasuUrl)
+                if (data && data.result && Array.isArray(data.result)) {
+                    animasuResults = data.result.map((item: any) => ({
+                        title: item.title,
+                        slug: item.slug,
+                        poster: item.thumb,
+                        rating: undefined,
+                        current_episode: undefined,
+                        release_day: undefined,
+                        total_episode: item.episode,
+                        newest_release_date: undefined,
+                        source: 'animasu',
+                    }))
+                }
+            } catch (err) {
+                console.error('Animasu search error:', err)
+            }
+
+            // Merge results: otakudesu first, then animasu (with label)
+            // Only add animasu if not already present in otakudesu (by normalized title or slug)
+            const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]+/g, '')
+            const otakudesuTitles = new Set(otakudesuResults.map(a => normalize(a.title)))
+            const otakudesuSlugs = new Set(otakudesuResults.map(a => normalize(a.slug)))
+            const filteredAnimasu = animasuResults.filter(a => {
+                const t = normalize(a.title)
+                const s = normalize(a.slug)
+                return !otakudesuTitles.has(t) && !otakudesuSlugs.has(s)
+            })
+            const merged = [...otakudesuResults, ...filteredAnimasu]
+            setAnimes(merged)
         } catch (error) {
             console.error('Error fetching search results:', error)
             setAnimes([])

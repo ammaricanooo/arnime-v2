@@ -14,6 +14,7 @@ interface Anime {
   newest_release_date?: string
   lastEpisodeName?: string
   lastEpisodeSlug?: string
+  source?: string
 }
 
 interface ContentGridProps {
@@ -54,8 +55,10 @@ export default function ContentGrid({
     if (anime.rating) {
       return { badge: anime.rating, badgeColor: 'bg-amber-500' } // Kuning emas untuk rating
     }
-    if (anime.total_episode) {
+    if (anime.total_episode && anime.source !== 'animasu') {
       return { badge: `${anime.total_episode} Ep`, badgeColor: 'bg-indigo-600' }
+    } else if (anime.source === 'animasu') {
+      return { badge: 'Animasu', badgeColor: 'bg-blue-600' }
     }
     return { badge: 'N/A', badgeColor: 'bg-slate-600' }
   }
@@ -78,6 +81,8 @@ export default function ContentGrid({
                 onClick={() => {
                   if (variant === 'history' && anime.lastEpisodeSlug) {
                     router.push(`/anime/${anime.slug}/watch/${anime.lastEpisodeSlug}`)
+                  } else if (anime.source === 'animasu') {
+                    router.push(`/animasu/${anime.slug}`)
                   } else {
                     router.push(`/anime/${anime.slug}`)
                   }
@@ -128,10 +133,11 @@ export default function ContentGrid({
 
                   {/* Info Section (Floating on Bottom) */}
                   <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
-                    <h3 className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-indigo-300 transition-colors">
-                      {anime.title}
-                    </h3>
-                    
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-indigo-300 transition-colors">
+                        {anime.title}
+                      </h3>
+                    </div>
                     {anime.lastEpisodeName ? (
                       <p className="text-[10px] text-indigo-300 font-bold flex items-center gap-1 uppercase tracking-tighter">
                         <span className="w-1 h-1 bg-indigo-400 rounded-full animate-ping" />

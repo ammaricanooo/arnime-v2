@@ -217,7 +217,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="uppercase italic tracking-tighter">Back to List Anime</span>
+          <span className="uppercase italic tracking-tighter">Kembali ke Halaman Utama</span>
         </button>
         <div className="flex gap-2">
           <button onClick={handleToggleLike} disabled={likeLoading} className={`p-3 rounded-full shadow-sm transition-all ${isLiked ? "bg-red-50 text-red-600" : "bg-white dark:bg-slate-800 text-slate-400"}`}>

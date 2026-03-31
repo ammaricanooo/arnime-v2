@@ -118,6 +118,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
     { id: 'complete', label: 'Complete', icon: Flame },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'favorites', label: 'Favorites', icon: Star },
+    // { id: 'livetv', label: 'Live TV', icon: History },
     { id: 'watchhistory', label: 'Watch History', icon: History },
   ]
 
