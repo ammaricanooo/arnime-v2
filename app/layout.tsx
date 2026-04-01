@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Arnime - Nonton Anime Sub Indo & Streaming Anime Terbaru',
   description: 'Arnime adalah website nonton anime sub indo terlengkap. Streaming anime terbaru, daftar anime populer, jadwal rilis episode terbaru, dan informasi lengkap semua genre anime dalam satu tempat.',
+  referrer: 'no-referrer',
   keywords: [
     'nonton anime sub indo',
     'streaming anime terbaru',

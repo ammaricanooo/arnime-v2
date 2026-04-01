@@ -1,6 +1,6 @@
 'use client'
 
-import { House, Flame, Star, History, MessageCircle, Calendar, X, LogOut, LogIn } from 'lucide-react'
+import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn } from 'lucide-react'
 import { useState, useRef, useEffect } from "react"
 import useAuth from "@/lib/useAuth"
 import { signInWithGoogle, signOutUser } from "@/lib/firebase"
@@ -118,8 +118,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
     { id: 'complete', label: 'Complete', icon: Flame },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'favorites', label: 'Favorites', icon: Star },
-    // { id: 'livetv', label: 'Live TV', icon: History },
     { id: 'watchhistory', label: 'Watch History', icon: History },
+    { id: 'livetv', label: 'Live TV', icon: Tv },
   ]
 
   const handleTabChange = (tab: string) => {

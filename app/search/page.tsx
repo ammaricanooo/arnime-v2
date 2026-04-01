@@ -76,16 +76,36 @@ export default function SearchPage() {
 
             // Merge results: otakudesu first, then animasu (with label)
             // Only add animasu if not already present in otakudesu (by normalized title or slug)
-            const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]+/g, '')
-            const otakudesuTitles = new Set(otakudesuResults.map(a => normalize(a.title)))
-            const otakudesuSlugs = new Set(otakudesuResults.map(a => normalize(a.slug)))
+            const normalize = (str: any) => {
+                if (!str) return '';
+                return str.toLowerCase()
+                    .replace(/sub.*indo/g, '') // Hapus kata "Sub Indo" agar tidak mengganggu pencocokan
+                    .replace(/episode/g, '')   // Hapus kata "Episode"
+                    .replace(/[^a-z0-9]+/g, '') // Hapus semua karakter spesial & spasi
+                    .trim();
+            };
+            const otakudesuTitles = new Set(otakudesuResults.map(a => normalize(a.title)));
+            const otakudesuSlugs = new Set(otakudesuResults.map(a => normalize(a.slug)));
             const filteredAnimasu = animasuResults.filter(a => {
-                const t = normalize(a.title)
-                const s = normalize(a.slug)
-                return !otakudesuTitles.has(t) && !otakudesuSlugs.has(s)
-            })
-            const merged = [...otakudesuResults, ...filteredAnimasu]
-            setAnimes(merged)
+                const tAnimasu = normalize(a.title);
+                const sAnimasu = normalize(a.slug);
+
+                // Cek apakah judul Animasu ada yang MIRIP dengan judul di Otakudesu
+                const isDuplicateTitle = Array.from(otakudesuTitles).some(otTitle =>
+                    tAnimasu.includes(otTitle) || otTitle.includes(tAnimasu)
+                );
+
+                // Cek apakah slug mirip
+                const isDuplicateSlug = Array.from(otakudesuSlugs).some(otSlug =>
+                    sAnimasu.includes(otSlug) || otSlug.includes(sAnimasu)
+                );
+
+                // Hanya kembalikan TRUE jika TIDAK ada duplikat judul DAN tidak ada duplikat slug
+                return !isDuplicateTitle && !isDuplicateSlug;
+            });
+
+            const merged = [...otakudesuResults, ...filteredAnimasu];
+            setAnimes(merged);
         } catch (error) {
             console.error('Error fetching search results:', error)
             setAnimes([])
