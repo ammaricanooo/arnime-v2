@@ -49,7 +49,7 @@ export default function LiveTVPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Live TV Indonesia</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Live TV Indonesia</h1>
           <p className="text-slate-500 text-sm">Streaming TV nasional kualitas HD gratis.</p>
         </div>
         

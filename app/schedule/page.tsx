@@ -115,7 +115,7 @@ export default function SchedulePage() {
                             <div className="flex-1 divide-y divide-slate-100 dark:divide-slate-800">
                                 {day.anime.length === 0 ? (
                                     <div className="px-6 py-8 text-center">
-                                        <p className="text-sm text-slate-400 italic">Tidak ada jadwal</p>
+                                        <p className="text-sm text-slate-400">Tidak ada jadwal</p>
                                     </div>
                                 ) : (
                                     day.anime.map((anime, animeIdx) => (

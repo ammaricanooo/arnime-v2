@@ -62,14 +62,14 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-12 text-center">
       <div className="inline-block animate-spin mb-4"><Box className="w-8 h-8 text-indigo-600" /></div>
-      <p className="font-black italic text-slate-400 uppercase tracking-widest">Loading...</p>
+      <p className="font-black text-slate-400 uppercase tracking-widest">Loading...</p>
     </div>
   )
 
   if (error || !data) return (
     <div className="max-w-md mx-auto px-4 py-24 text-center">
       <Info className="w-12 h-12 mx-auto text-red-500 mb-4" />
-      <h2 className="text-xl font-black uppercase italic mb-2">Data Kosong</h2>
+      <h2 className="text-xl font-black mb-2">Data Kosong</h2>
       <p className="text-slate-500 mb-8">{error}</p>
       <button onClick={() => router.push(`/anime/${slug}`)} className="w-full py-3 bg-indigo-600 text-white rounded-2xl font-bold">Kembali</button>
     </div>
@@ -83,7 +83,7 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="uppercase italic tracking-tighter">Back to Detail Anime</span>
+        <span className="tracking-tighter">Back to Detail Anime</span>
       </button>
 
       <div className="bg-white dark:bg-slate-900 rounded-[40px] p-6 md:p-12 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
@@ -99,7 +99,7 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
           </div>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-black mb-12 leading-tight italic uppercase tracking-tighter text-slate-900 dark:text-white">
+        <h1 className="text-3xl md:text-4xl font-black mb-12 leading-tight uppercase tracking-tighter text-slate-900 dark:text-white">
           {data.title}
         </h1>
 
@@ -108,11 +108,11 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
             <div key={i} className="relative">
               {/* Judul Episode & Resolusi */}
               <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
-                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase italic">
+                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase">
                   {item.title}
                 </h3>
                 <div className="hidden md:block h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <span className="w-fit bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-lg italic shadow-lg shadow-indigo-100 dark:shadow-none uppercase">
+                <span className="w-fit bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-lg shadow-lg shadow-indigo-100 dark:shadow-none uppercase">
                   Res: {item.resolution}
                 </span>
               </div>

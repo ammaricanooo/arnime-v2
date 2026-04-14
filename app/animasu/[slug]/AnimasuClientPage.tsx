@@ -118,7 +118,7 @@ export default function AnimasuClientPage({ slug }: Props) {
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="uppercase italic tracking-tighter">Kembali Ke Halaman Detail Anime</span>
+        <span className="tracking-tighter">Kembali Ke Halaman Detail Anime</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -176,7 +176,7 @@ export default function AnimasuClientPage({ slug }: Props) {
 
             {/* Sinopsis */}
             <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 italic">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <Film className="w-4 h-4 text-indigo-500" /> Sinopsis
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">

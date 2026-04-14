@@ -12,6 +12,8 @@ export default function LiveTVWatchPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const [streamUrl, setStreamUrl] = useState<string>('')
+  const [referer, setReferer] = useState<string>('')
+  const [origin, setOrigin] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -22,8 +24,11 @@ export default function LiveTVWatchPage() {
         const data = await res.json()
         // Cari channel yang namanya cocok dengan parameter 'name'
         const found = data.result.find((ch: any) => ch.name === name)
-        if (found) setStreamUrl(found.url)
-        else setError(true)
+        if (found) {
+          setStreamUrl(found.url)
+          setReferer(found.referer || '')
+          setOrigin(found.origin || '')
+        } else setError(true)
       } catch {
         setError(true)
       }
@@ -38,7 +43,12 @@ export default function LiveTVWatchPage() {
     let hls: Hls
 
     if (Hls.isSupported()) {
-      hls = new Hls()
+      hls = new Hls({
+        xhrSetup: function (xhr, url) {
+          xhr.setRequestHeader("Referer", referer)
+          xhr.setRequestHeader("Origin", origin)
+        }
+      })
       hls.loadSource(streamUrl)
       hls.attachMedia(video)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -75,7 +85,7 @@ export default function LiveTVWatchPage() {
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="uppercase italic tracking-tighter">Kembali Ke Halaman Daftar Live TV</span>
+        <span className="tracking-tighter">Kembali Ke Halaman Daftar Live TV</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -145,7 +155,7 @@ export default function LiveTVWatchPage() {
               </div>
             </div>
             <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-2xl">
-              <p className="text-[10px] text-slate-500 leading-relaxed italic">
+              <p className="text-[10px] text-slate-500 leading-relaxed">
                 Gunakan browser Chrome atau Edge untuk pengalaman terbaik. Jika stream macet, silakan refresh halaman.
               </p>
             </div>

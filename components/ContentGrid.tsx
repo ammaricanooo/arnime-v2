@@ -140,8 +140,7 @@ export default function ContentGrid({
                     </div>
                     {anime.lastEpisodeName ? (
                       <p className="text-[10px] text-indigo-300 font-bold flex items-center gap-1 uppercase tracking-tighter">
-                        <span className="w-1 h-1 bg-indigo-400 rounded-full animate-ping" />
-                        Lanjut: {anime.lastEpisodeName}
+                        {anime.lastEpisodeName}
                       </p>
                     ) : (
                       <p className="text-[10px] text-slate-300 font-medium opacity-80">
