@@ -1,6 +1,6 @@
 'use client'
 
-import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn } from 'lucide-react'
+import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn, GalleryVertical } from 'lucide-react'
 import { useState, useRef, useEffect } from "react"
 import useAuth from "@/lib/useAuth"
 import { signInWithGoogle, signOutUser } from "@/lib/firebase"
@@ -21,7 +21,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
   const ref = useRef<HTMLDivElement>(null)
 
   console.log(user);
-  
+
 
   // close dropdown kalau klik luar
   useEffect(() => {
@@ -113,14 +113,33 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
   }
 
 
-  const menuItems = [
-    { id: 'home', label: 'Home', icon: House },
-    { id: 'complete', label: 'Complete', icon: Flame },
-    { id: 'schedule', label: 'Schedule', icon: Calendar },
-    { id: 'favorites', label: 'Favorites', icon: Star },
-    { id: 'watchhistory', label: 'Watch History', icon: History },
-    { id: 'livetv', label: 'Live TV', icon: Tv },
+  const menuGroups = [
+    {
+      title: "Anime",
+      items: [
+        { id: "home", label: "Home", icon: House },
+        { id: "complete", label: "Complete", icon: Flame },
+        { id: "schedule", label: "Schedule", icon: Calendar },
+      ],
+    },
+    {
+      title: "Comic",
+      items: [
+        { id: "comic", label: "Comic", icon: GalleryVertical },
+      ],
+    },
+    {
+      title: "TV",
+      items: [
+        { id: "livetv", label: "Live TV", icon: Tv },
+      ],
+    },
   ]
+
+  const bottomItems = [
+  { id: "favorites", label: "Favorites", icon: Star },
+  { id: "watchhistory", label: "Watch History", icon: History },
+]
 
   const handleTabChange = (tab: string) => {
     onTabChange(tab)
@@ -160,28 +179,67 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
           </div>
         </div>
 
-        <nav className="flex flex-col p-3 space-y-1 flex-1">
-          {menuItems.map((item) => {
-            const IconComponent = item.icon
-            const isActive = activeTab === item.id
+        <nav className="flex flex-col p-3 space-y-6 flex-1 w-full">
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleTabChange(item.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${isActive
-                  ? 'bg-linear-to-r from-indigo-600 to-indigo-700 text-white shadow-md'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  } ${isCollapsed ? 'justify-center px-2' : ''
-                  }`}
-                title={isCollapsed ? item.label : ''}
-              >
-                <IconComponent className="w-5 h-5 shrink-0" />
-                {!isCollapsed && <span>{item.label}</span>}
-              </button>
-            )
-          })}
-        </nav>
+          {menuGroups.map((group) => (
+            <div key={group.title}>
+              {/* SECTION TITLE */}
+              {!isCollapsed && (
+                <p className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  {group.title}
+                </p>
+              )}
+
+              {/* ITEMS */}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const IconComponent = item.icon
+                  const isActive = activeTab === item.id
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabChange(item.id)}
+                      className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${isActive
+                          ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        } ${isCollapsed ? "justify-center px-2" : ""}`}
+                      title={isCollapsed ? item.label : ""}
+                    >
+                      <IconComponent className="w-5 h-5 shrink-0" />
+                      {!isCollapsed && <span>{item.label}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+            {/* separator */}
+  <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+
+  {/* bottom items */}
+  <div className="space-y-1">
+    {bottomItems.map((item) => {
+      const Icon = item.icon
+      const isActive = activeTab === item.id
+
+      return (
+        <button
+          key={item.id}
+          onClick={() => handleTabChange(item.id)}
+          className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all text-sm ${
+            isActive
+              ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+          } ${isCollapsed ? "justify-center px-2" : ""}`}
+        >
+          <Icon className="w-5 h-5" />
+          {!isCollapsed && <span>{item.label}</span>}
+        </button>
+      )
+    })}
+  </div>
+</nav>
 
         <div ref={ref} className="relative inline-block w-full mb-16 md:mb-0"> {/* Berikan lebar tetap agar tidak 'loncat' */}
           {user ? (

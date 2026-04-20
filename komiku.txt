@@ -1,0 +1,24 @@
+latest api: https://api.ammaricano.my.id/api/komiku/latest?page=1
+hot api: https://api.ammaricano.my.id/api/komiku/hot?page=1
+
+response: {
+  "success": true,
+  "code": 200,
+  "result": [
+    {
+      "title": "To Hell With Being a Saint, I’m a Doctor",
+      "link": "https://komiku.org/manga/to-hell-with-being-a-saint-im-a-doctor/",
+      "image": "https://thumbnail.komiku.org/uploads/manga/to-hell-with-being-a-saint-im-a-doctor/manga_img_horizontal-ToHellPanjang.png?resize=450,235",
+      "type": "Manhwa",
+      "genre": "Fantasi",
+      "update": "Up 4",
+      "readers": "790rb pembaca",
+      "time": "2 menit lalu",
+      "extra": "Berwarna",
+      "description": "Transformasi hidup seorang individu yang berani mengikuti passion sebagai dokter yang berdedikasi.",
+      "firstChapter": "Chapter 01",
+      "firstChapterLink": "/to-hell-with-being-a-saint-im-a-doctor-chapter-01/",
+      "latestChapter": "Chapter 158",
+      "latestChapterLink": "/to-hell-with-being-a-saint-im-a-doctor-chapter-158/"
+    },
+    ...

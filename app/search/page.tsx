@@ -1,5 +1,6 @@
 "use client";
 import ContentGrid from "@/components/ContentGrid";
+import ComicContentGrid, { Comic } from "@/components/ComicContentGrid";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -23,6 +24,7 @@ export default function SearchPage() {
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [activeTab, setActiveTab] = useState('')
     const [animes, setAnimes] = useState<AnimeData[]>([])
+    const [comics, setComics] = useState<Comic[]>([])
     const [loading, setLoading] = useState(false)
     const [likedAnimes, setLikedAnimes] = useState<string[]>([])
     const [hasSearched, setHasSearched] = useState(false)
@@ -74,38 +76,33 @@ export default function SearchPage() {
                 console.error('Animasu search error:', err)
             }
 
-            // Merge results: otakudesu first, then animasu (with label)
-            // Only add animasu if not already present in otakudesu (by normalized title or slug)
-            const normalize = (str: any) => {
-                if (!str) return '';
-                return str.toLowerCase()
-                    .replace(/sub.*indo/g, '') // Hapus kata "Sub Indo" agar tidak mengganggu pencocokan
-                    .replace(/episode/g, '')   // Hapus kata "Episode"
-                    .replace(/[^a-z0-9]+/g, '') // Hapus semua karakter spesial & spasi
-                    .trim();
-            };
-            const otakudesuTitles = new Set(otakudesuResults.map(a => normalize(a.title)));
-            const otakudesuSlugs = new Set(otakudesuResults.map(a => normalize(a.slug)));
-            const filteredAnimasu = animasuResults.filter(a => {
-                const tAnimasu = normalize(a.title);
-                const sAnimasu = normalize(a.slug);
+            // Komiku
+            const komikuUrl = `https://api.ammaricano.my.id/api/komiku/search?query=${encodeURIComponent(query)}`
+            let komikuResults: Comic[] = []
+            try {
+                const data = await fetchJson(komikuUrl)
+                if (data && data.result && Array.isArray(data.result)) {
+                    komikuResults = data.result.map((item: any) => ({
+                        title: item.title,
+                        link: item.link,
+                        thumb: item.thumb,
+                        image: item.thumb,
+                        genre: item.type,
+                        latest_chapter: item.latest_chapter,
+                        info: item.description,
+                        chapter: item.latest_chapter,
+                        type: item.type,
+                        update: item.description,
+                    }))
+                }
+            } catch (err) {
+                console.error('Komiku search error:', err)
+            }
 
-                // Cek apakah judul Animasu ada yang MIRIP dengan judul di Otakudesu
-                const isDuplicateTitle = Array.from(otakudesuTitles).some(otTitle =>
-                    tAnimasu.includes(otTitle) || otTitle.includes(tAnimasu)
-                );
-
-                // Cek apakah slug mirip
-                const isDuplicateSlug = Array.from(otakudesuSlugs).some(otSlug =>
-                    sAnimasu.includes(otSlug) || otSlug.includes(sAnimasu)
-                );
-
-                // Hanya kembalikan TRUE jika TIDAK ada duplikat judul DAN tidak ada duplikat slug
-                return !isDuplicateTitle && !isDuplicateSlug;
-            });
-
-            const merged = [...otakudesuResults, ...filteredAnimasu];
+            // Merge results: otakudesu first, then animasu, then komiku
+            const merged = [...otakudesuResults, ...animasuResults];
             setAnimes(merged);
+            setComics(komikuResults);
         } catch (error) {
             console.error('Error fetching search results:', error)
             setAnimes([])
@@ -144,9 +141,9 @@ export default function SearchPage() {
                             {query ? `Search Results for "${query}"` : 'Search Anime'}
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
-                            {hasSearched && animes.length > 0
-                                ? `Found ${animes.length} anime`
-                                : hasSearched && animes.length === 0
+                            {hasSearched && (animes.length > 0 || comics.length > 0)
+                                ? `Found ${animes.length} anime${comics.length > 0 ? ` and ${comics.length} comic` : ''}`
+                                : hasSearched && animes.length === 0 && comics.length === 0
                                     ? 'No results found'
                                     : 'Enter an anime title to search'}
                         </p>
@@ -164,13 +161,25 @@ export default function SearchPage() {
                 hasMore={false}
             />
 
+            {/* Comic Results */}
+            {comics.length > 0 && (
+                <div className="mt-12">
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Comic Results</h2>
+                    <ComicContentGrid
+                        comics={comics}
+                        loading={false}
+                        hasMore={false}
+                    />
+                </div>
+            )}
+
             {/* Empty State */}
-            {animes.length === 0 && !loading && hasSearched && (
+            {animes.length === 0 && comics.length === 0 && !loading && hasSearched && (
                 <div className="flex items-center justify-center py-24">
                     <div className="text-center">
                         <img src="NotFound.png" alt="Not Found" className="w-84" />
                         <p className="text-slate-600 dark:text-slate-400 mb-4">
-                            No anime found for "{query}"
+                            No anime or comic found for "{query}"
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-500">
                             Try searching with different keywords

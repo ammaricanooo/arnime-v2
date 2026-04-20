@@ -231,6 +231,11 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
         {/* Kolom Poster */}
+        <div className="absolute inset-x-0 top-0 h-[450px] md:h-[550px] z-0 overflow-hidden pointer-events-none [mask-image:linear-gradient(to_bottom,black_0%,transparent_80%)]">
+            <div className="absolute inset-0 opacity-50 dark:opacity-40">
+                <img src={detail.poster} alt="" className="w-full h-full object-cover blur-3xl scale-110 saturate-150" />
+            </div>
+        </div>
         <div className="md:col-span-4 lg:col-span-3">
           <div className="sticky top-24">
             <img src={detail.poster} alt={detail.title} className="w-full rounded-2xl shadow-2xl object-cover aspect-3/4" />
@@ -254,7 +259,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
           </div>
 
           {/* Info Box */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Studio</p><p className="text-sm font-semibold">{detail.studio || "-"}</p></div>
             <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Rilis</p><p className="text-sm font-semibold">{detail.release_date || "-"}</p></div>
             <div className="col-span-2"><p className="text-xs text-slate-500 font-bold uppercase mb-1">Genre</p>

@@ -29,6 +29,7 @@ export default function AppShell({ children }: AppShellProps) {
     if (pathname.startsWith('/favorites')) return 'favorites'
     if (pathname.startsWith('/watchhistory')) return 'watchhistory'
     if (pathname.startsWith('/livetv')) return 'livetv'
+    if (pathname.startsWith('/comic')) return 'comic'
 
     return 'home'
   }
@@ -56,6 +57,8 @@ export default function AppShell({ children }: AppShellProps) {
       router.push('/watchhistory')
     } else if (tab === 'livetv') {
       router.push('/livetv')
+    } else if (tab === 'comic') {
+      router.push('/comic')
     }
     if (window.innerWidth < 768) setSidebarOpen(false)
   }
