@@ -46,7 +46,7 @@ export default function GenreFilter({
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
-          <div className="py-1 max-h-64 overflow-y-auto">
+          <div className="py-1 max-h-64 overflow-y-auto custom-scroll">
             {genres.map((genre) => (
               <button
                 key={genre}

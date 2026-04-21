@@ -163,6 +163,27 @@ export default function ComicDetailPage() {
     }
   }
 
+  // 5. Handle Read Chapter & History
+  const handleReadChapter = async (chapterSlug: string, chapterTitle: string) => {
+    if (user && comic) {
+      try {
+        await setDoc(doc(db, "history", `${user.uid}_${slug}`), {
+          userId: user.uid,
+          slug,
+          title: comic.title,
+          poster: comic.thumbnail,
+          lastEpisodeName: chapterTitle,
+          lastEpisodeSlug: chapterSlug,
+          type: "comic",
+          lastWatched: new Date().toISOString(),
+        }, { merge: true })
+      } catch (err) {
+        console.error("Gagal simpan history:", err)
+      }
+    }
+    router.push(`/comic/${slug}/chapter/${chapterSlug}`)
+  }
+
   if (!slug) return notFound()
 
   if (loading) return <ComicSkeleton />
@@ -218,7 +239,7 @@ export default function ComicDetailPage() {
             {comic.alt_title && <p className="text-lg text-slate-500">{comic.alt_title}</p>}
 
             <div className="flex flex-wrap gap-6 text-sm font-medium">
-              <div className="flex items-center gap-1"><User className="w-5 h-5 text-slate-400" /> <span className="text-base">{comic.author || "-"}</span></div>
+              <div className="flex items-center gap-2 text-slate-400"><User className="w-5 h-5 text-slate-400" /> <span className="text-base">{comic.author || "-"}</span></div>
               <div className="flex items-center gap-2 text-slate-400 border-l border-slate-700 pl-6"><Calendar className="w-5 h-5" /> {comic.status}</div>
               <div className="flex items-center gap-2 text-slate-400 border-l border-slate-700 pl-6"><Layers className="w-5 h-5" /> {comic.type}</div>
             </div>
@@ -227,13 +248,13 @@ export default function ComicDetailPage() {
           {/* Info Box */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="col-span-2"><p className="text-xs text-slate-500 font-bold uppercase mb-1">Genre</p>
-              <div className="flex flex-wrap gap-1">{comic.genres?.map(g => <span key={g} className="text-[10px] bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700">{g.trim()}</span>)}</div>
+              <div className="flex flex-wrap gap-1">{comic.genres?.map(g => <span key={g} className="text-[10px] bg-white dark:bg-slate-800 dark:text-white px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700">{g.trim()}</span>)}</div>
             </div>
           </div>
 
           {/* Sinopsis */}
           <div className="space-y-3">
-            <h3 className="text-xl font-bold flex items-center gap-2"><div className="w-1 h-5 bg-indigo-600 rounded-full" /> Sinopsis</h3>
+            <h3 className="text-xl font-bold flex items-center gap-2 dark:text-white"><div className="w-1 h-5 bg-indigo-600 rounded-full" /> Sinopsis</h3>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">{comic.description}</p>
           </div>
 
@@ -246,7 +267,7 @@ export default function ComicDetailPage() {
                 return (
                   <button
                     key={ch.url}
-                    onClick={() => router.push(`/comic/${slug}/chapter/${chapterSlug}`)}
+                    onClick={() => handleReadChapter(chapterSlug, ch.title)}
                     className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group text-left"
                   >
                     <BookOpen className="w-8 h-8 text-slate-300 group-hover:text-indigo-600 transition-colors shrink-0" />

@@ -3,18 +3,19 @@ import { useParams, notFound } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { db } from "@/lib/firebase"
+import { useComicGap } from "@/lib/useComicGap"
+import useAuth from "@/lib/useAuth";
 import { doc, setDoc } from "firebase/firestore"
-import useAuth from "@/lib/useAuth"
+import { db } from "@/lib/firebase"
 
 // --- Skeleton Component ---
 const ChapterSkeleton = () => (
   <div className="max-w-4xl mx-auto px-4 animate-pulse">
     <div className="h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg my-6" />
-    <div className="space-y-4">
-      <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-      <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-      <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+    <div>
+      <div className="h-64 bg-slate-200 dark:bg-slate-800" />
+      <div className="h-64 bg-slate-200 dark:bg-slate-800" />
+      <div className="h-64 bg-slate-200 dark:bg-slate-800" />
     </div>
   </div>
 )
@@ -31,6 +32,7 @@ export default function ComicChapterPage() {
   const chapterSlug = params?.chapterSlug
   const router = useRouter()
   const { user } = useAuth()
+  const { comicGap } = useComicGap()
   const [chapter, setChapter] = useState<ChapterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +139,7 @@ export default function ComicChapterPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 pb-20">
+    <div className="max-w-4xl pb-20 -mx-4 md:mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between py-6">
         <button
@@ -166,13 +168,13 @@ export default function ComicChapterPage() {
       </div>
 
       {/* Images */}
-      <div className="space-y-4">
+      <div className={comicGap ? 'space-y-4' : ''}>
         {chapter.images.map((img, idx) => (
           <img
             key={idx}
             src={img}
             alt={`Page ${idx + 1}`}
-            className="w-full rounded-2xl shadow-lg"
+            className="w-full"
             loading="lazy"
           />
         ))}

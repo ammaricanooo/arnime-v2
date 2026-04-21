@@ -214,7 +214,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
       <div className="flex items-center justify-between py-6">
         <button
           onClick={() => router.push(`/`)}
-          className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
+          className="flex items-center gap-2 text-slate-500 hover:text-black font-bold transition-all group mb-8"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="tracking-tighter">Kembali ke Halaman Utama</span>
@@ -252,7 +252,7 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
             <p className="text-lg text-slate-500">{detail.japanese}</p>
 
             <div className="flex flex-wrap gap-6 text-sm font-medium">
-              <div className="flex items-center gap-1"><Star className="w-5 h-5 text-yellow-500 fill-current" /> <span className="text-lg">{detail.score || "N/A"}</span></div>
+              <div className="flex items-center gap-1 text-slate-400"><Star className="w-5 h-5 text-yellow-500 fill-current" /> <span className="text-lg">{detail.score || "N/A"}</span></div>
               <div className="flex items-center gap-2 text-slate-400 border-l border-slate-700 pl-6"><Tv className="w-5 h-5" /> {detail.total_episode} Eps</div>
               <div className="flex items-center gap-2 text-slate-400 border-l border-slate-700 pl-6"><Clock className="w-5 h-5" /> {detail.duration}</div>
             </div>
@@ -260,22 +260,22 @@ export default function AnimeDetailPage({ slug }: { slug: string }) {
 
           {/* Info Box */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Studio</p><p className="text-sm font-semibold">{detail.studio || "-"}</p></div>
-            <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Rilis</p><p className="text-sm font-semibold">{detail.release_date || "-"}</p></div>
+            <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Studio</p><p className="text-sm font-semibold text-slate-400">{detail.studio || "-"}</p></div>
+            <div><p className="text-xs text-slate-500 font-bold uppercase mb-1">Rilis</p><p className="text-sm font-semibold text-slate-400">{detail.release_date || "-"}</p></div>
             <div className="col-span-2"><p className="text-xs text-slate-500 font-bold uppercase mb-1">Genre</p>
-              <div className="flex flex-wrap gap-1">{detail.genre?.split(',').map(g => <span key={g} className="text-[10px] bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700">{g.trim()}</span>)}</div>
+              <div className="flex flex-wrap gap-1">{detail.genre?.split(',').map(g => <span key={g} className="text-[10px] bg-white dark:bg-slate-800 dark:text-white px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700">{g.trim()}</span>)}</div>
             </div>
           </div>
 
           {/* Sinopsis */}
           <div className="space-y-3">
-            <h3 className="text-xl font-bold flex items-center gap-2"><div className="w-1 h-5 bg-indigo-600 rounded-full" /> Sinopsis</h3>
+            <h3 className="text-xl font-bold flex items-center gap-2 dark:text-white"><div className="w-1 h-5 bg-indigo-600 rounded-full" /> Sinopsis</h3>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{detail.synopsis}</p>
           </div>
 
           {/* Episode List */}
           <div className="space-y-4 pt-4">
-            <h3 className="text-xl font-bold">Daftar Episode</h3>
+            <h3 className="text-xl font-bold dark:text-white">Daftar Episode</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {detail.episodes?.map((ep, idx) => (
                 <button

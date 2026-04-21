@@ -1,6 +1,6 @@
 'use client'
 
-import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn, GalleryVertical } from 'lucide-react'
+import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn, GalleryVertical, Settings } from 'lucide-react'
 import { useState, useRef, useEffect } from "react"
 import useAuth from "@/lib/useAuth"
 import { signInWithGoogle, signOutUser } from "@/lib/firebase"
@@ -137,9 +137,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
   ]
 
   const bottomItems = [
-  { id: "favorites", label: "Favorites", icon: Star },
-  { id: "watchhistory", label: "Watch History", icon: History },
-]
+    { id: "favorites", label: "Favorites", icon: Star },
+    { id: "watchhistory", label: "Watch History", icon: History },
+    { id: "settings", label: "Settings", icon: Settings },
+  ]
 
   const handleTabChange = (tab: string) => {
     onTabChange(tab)
@@ -160,7 +161,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
 
       {/* Sidebar - Full height from top */}
       <aside
-        className={`fixed md:static left-0 top-16 h-full bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 overflow-y-auto overflow-x-hidden z-40 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'
+        className={`fixed md:static left-0 top-16 h-full bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 overflow-y-auto overflow-x-hidden z-40 flex flex-col transition-all duration-300 custom-scroll ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'
           } ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
       >
@@ -201,8 +202,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
                       key={item.id}
                       onClick={() => handleTabChange(item.id)}
                       className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${isActive
-                          ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         } ${isCollapsed ? "justify-center px-2" : ""}`}
                       title={isCollapsed ? item.label : ""}
                     >
@@ -214,32 +215,31 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
               </div>
             </div>
           ))}
-            {/* separator */}
-  <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+          {/* separator */}
+          <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
 
-  {/* bottom items */}
-  <div className="space-y-1">
-    {bottomItems.map((item) => {
-      const Icon = item.icon
-      const isActive = activeTab === item.id
+          {/* bottom items */}
+          <div className="space-y-1">
+            {bottomItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
 
-      return (
-        <button
-          key={item.id}
-          onClick={() => handleTabChange(item.id)}
-          className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all text-sm ${
-            isActive
-              ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white"
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-          } ${isCollapsed ? "justify-center px-2" : ""}`}
-        >
-          <Icon className="w-5 h-5" />
-          {!isCollapsed && <span>{item.label}</span>}
-        </button>
-      )
-    })}
-  </div>
-</nav>
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all text-sm ${isActive
+                      ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    } ${isCollapsed ? "justify-center px-2" : ""}`}
+                >
+                  <Icon className="w-5 h-5" />
+                  {!isCollapsed && <span>{item.label}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
 
         <div ref={ref} className="relative inline-block w-full mb-16 md:mb-0"> {/* Berikan lebar tetap agar tidak 'loncat' */}
           {user ? (
@@ -247,7 +247,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
               {/* CARD SAAT LOGIN */}
               <div
                 onClick={() => setOpen(!open)}
-                className="flex items-center gap-3 px-3 py-2 bg-white border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition h-13"
+                className="relative flex items-center gap-3 px-3 py-2 border-t border-slate-200 dark:border-slate-800 cursor-pointer transition h-13"
               >
                 <img
                   src={user.photoURL || '/default-avatar.png'}
@@ -257,24 +257,22 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
                   loading='lazy'
                 />
                 <div className="text-sm truncate">
-                  <p className="font-semibold leading-tight truncate">{user.displayName}</p>
+                  <p className="font-semibold leading-tight truncate dark:text-white">{user.displayName}</p>
                   <p className="text-gray-500 text-xs truncate">{user.email}</p>
                 </div>
+                {/* DROPDOWN LOGOUT */}
+                {open && (
+                  <div className="w-fit p-1 z-50">
+                    <button
+                      onClick={handleLogout}
+                      disabled={busy}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition disabled:opacity-60"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* DROPDOWN LOGOUT */}
-              {open && (
-                <div className="absolute left-0 bottom-12 w-full p-1 z-50">
-                  <button
-                    onClick={handleLogout}
-                    disabled={busy}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg text-red-600 hover:bg-red-50 transition disabled:opacity-60"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </div>
-              )}
             </>
           ) : (
             /* TOMBOL SAAT BELUM LOGIN (Dibuat identik secara dimensi) */

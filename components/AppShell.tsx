@@ -30,6 +30,7 @@ export default function AppShell({ children }: AppShellProps) {
     if (pathname.startsWith('/watchhistory')) return 'watchhistory'
     if (pathname.startsWith('/livetv')) return 'livetv'
     if (pathname.startsWith('/comic')) return 'comic'
+    if (pathname.startsWith('/settings')) return 'settings'
 
     return 'home'
   }
@@ -59,6 +60,8 @@ export default function AppShell({ children }: AppShellProps) {
       router.push('/livetv')
     } else if (tab === 'comic') {
       router.push('/comic')
+    } else if (tab === 'settings') {
+      router.push('/settings')
     }
     if (window.innerWidth < 768) setSidebarOpen(false)
   }
@@ -82,7 +85,7 @@ export default function AppShell({ children }: AppShellProps) {
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="relative flex-1 overflow-y-auto custom-scroll">
           <div className="w-full py-8 px-4 md:px-8">
             {children}
           </div>

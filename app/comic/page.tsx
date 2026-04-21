@@ -10,7 +10,7 @@ const GENRES = [
 
 
 export default function ComicHomePage() {
-  const [genre, setGenre] = useState(GENRES[0].id)
+  const [genre, setGenre] = useState(GENRES[1].id)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [comics, setComics] = useState<Comic[]>([])
   const [page, setPage] = useState(1)
@@ -76,33 +76,53 @@ export default function ComicHomePage() {
   const genreLabel = GENRES.find(g => g.id === genre)?.label || 'Genre'
 
   return (
-    <div className="max-w-6xl mx-auto py-8">
+    <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Comic - Komiku</h1>
-        <div className="relative w-56">
-          <button
-            onClick={() => setDropdownOpen(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
-          >
-            <span className="text-sm font-medium">{genreLabel}</span>
-            <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} />
-          </button>
-          {dropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
-              <div className="py-1 max-h-64 overflow-y-auto">
-                {GENRES.map(g => (
-                  <button
-                    key={g.id}
-                    onClick={() => { setGenre(g.id); setDropdownOpen(false) }}
-                    className={`w-full cursor-pointer text-left px-4 py-2.5 text-sm transition-colors ${genre === g.id ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 font-semibold' : 'text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                  >
-                    {g.label}
-                  </button>
-                ))}
+        {/* Skeleton untuk Judul */}
+        {loading && comics.length === 0 ? (
+          <div className="animate-pulse space-y-2">
+            <div className="h-8 md:h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+            <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800/50 rounded" />
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Comic {genreLabel}</h1>
+            <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
+              Browse and discover your favorite comic content
+            </p>
+          </div>
+        )}
+        {/* Skeleton untuk Judul */}
+        {loading && comics.length === 0 ? (
+          <div className="flex gap-2 animate-pulse overflow-hidden w-full md:w-auto">
+            <div className="h-10 w-56 bg-slate-200 dark:bg-slate-800 rounded shrink-0" />
+          </div>
+        ) : (
+          <div className="relative w-56">
+            <button
+              onClick={() => setDropdownOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
+            >
+              <span className="text-sm font-medium">{genreLabel}</span>
+              <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                <div className="py-1 max-h-64 overflow-y-auto">
+                  {GENRES.map(g => (
+                    <button
+                      key={g.id}
+                      onClick={() => { setGenre(g.id); setDropdownOpen(false) }}
+                      className={`w-full cursor-pointer text-left px-4 py-2.5 text-sm transition-colors ${genre === g.id ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 font-semibold' : 'text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <ComicContentGrid

@@ -101,6 +101,9 @@ export default function ComicContentGrid({
                   <div className={`absolute top-2 left-2 flex items-center gap-1 px-2.5 py-1 ${badgeColor} rounded-lg text-[10px] font-black text-white shadow-lg`}>
                     {badge.toUpperCase()}
                   </div>
+                  <div className={`absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1 bg-indigo-600 rounded-lg text-[10px] font-black text-white shadow-lg`}>
+                    {comic.time}
+                  </div>
 
                   {/* Info Section (Floating on Bottom) */}
                   <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">

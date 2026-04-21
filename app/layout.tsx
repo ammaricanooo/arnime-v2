@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import AppShell from '../components/AppShell'
 import { Suspense } from 'react'
+import { ThemeProvider } from '../lib/ThemeProvider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -13,6 +14,11 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
 })
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: 'Arnime - Nonton Anime Sub Indo & Streaming Anime Terbaru',
@@ -47,7 +53,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Suspense fallback={null}>
-        <AppShell>{children}</AppShell>
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+          </ThemeProvider>
         </Suspense>
       </body>
     </html>
