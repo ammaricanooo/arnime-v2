@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Loader2, ChevronDown } from 'lucide-react'
+import { Loader2, ChevronDown, Shuffle } from 'lucide-react'
 import ComicContentGrid, { Comic } from '@/components/ComicContentGrid'
 
 const GENRES = [

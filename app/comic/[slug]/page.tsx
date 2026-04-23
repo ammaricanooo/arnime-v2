@@ -68,32 +68,8 @@ export default function ComicDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        // Get all comics from both hot and latest, find by slug
-        const apis = [
-          'https://api.ammaricano.my.id/api/komiku/hot?page=1',
-          'https://api.ammaricano.my.id/api/komiku/latest?page=1',
-        ]
-        let foundUrl = ''
-        for (const api of apis) {
-          const res = await fetch(api)
-          const json = await res.json()
-          if (json.success && Array.isArray(json.result)) {
-            const found = json.result.find((c: any) => {
-              const urlSlug = c.link.split('/').filter(Boolean).pop()
-              return urlSlug === slug
-            })
-            if (found) {
-              foundUrl = found.link
-              break
-            }
-          }
-        }
-        if (!foundUrl) {
-          setError('Comic not found')
-          setLoading(false)
-          return
-        }
-        const res = await fetch(`https://api.ammaricano.my.id/api/komiku/detail?url=${encodeURIComponent(foundUrl)}`)
+        const comicUrl = `https://komiku.org/manga/${slug}/`
+        const res = await fetch(`https://api.ammaricano.my.id/api/komiku/detail?url=${encodeURIComponent(comicUrl)}`)
         const json = await res.json()
         if (json.success && json.result) {
           setComic(json.result)
@@ -260,7 +236,7 @@ export default function ComicDetailPage() {
 
           {/* Daftar Chapter */}
           <div className="space-y-4 pt-4">
-            <h3 className="text-xl font-bold flex items-center gap-2"><BookOpen className="w-6 h-6 text-indigo-500" /> Daftar Chapter</h3>
+            <h3 className="text-xl font-bold flex items-center gap-2 dark:text-white"><BookOpen className="w-6 h-6 text-indigo-500" /> Daftar Chapter</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {comic.chapters.slice().reverse().map((ch, idx) => {
                 const chapterSlug = ch.url.split('/').filter(Boolean).pop() || ''

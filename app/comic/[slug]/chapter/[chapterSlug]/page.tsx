@@ -1,6 +1,6 @@
 "use client"
 import { useParams, notFound } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useComicGap } from "@/lib/useComicGap"
@@ -36,6 +36,25 @@ export default function ComicChapterPage() {
   const [chapter, setChapter] = useState<ChapterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
+  const [showNav, setShowNav] = useState(false);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Sekarang kita cek scrollTop dari elemen tersebut
+      if (container.scrollTop > 50) {
+        setShowNav(true);
+      } else {
+        setShowNav(false);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!slug || !chapterSlug) return
@@ -43,42 +62,25 @@ export default function ComicChapterPage() {
       setLoading(true)
       setError(null)
       try {
-        // First, fetch comic detail to get chapter URL
-        const apis = [
-          'https://api.ammaricano.my.id/api/komiku/hot?page=1',
-          'https://api.ammaricano.my.id/api/komiku/latest?page=1',
-        ]
+        const comicUrl = `https://komiku.org/manga/${slug}/`
+        const detailRes = await fetch(`https://api.ammaricano.my.id/api/komiku/detail?url=${encodeURIComponent(comicUrl)}`)
+        const detailJson = await detailRes.json()
         let chapterUrl = ''
-        for (const api of apis) {
-          const res = await fetch(api)
-          const json = await res.json()
-          if (json.success && Array.isArray(json.result)) {
-            const found = json.result.find((c: any) => {
-              const urlSlug = c.link.split('/').filter(Boolean).pop()
-              return urlSlug === slug
-            })
-            if (found) {
-              // Fetch full detail to get chapters
-              const detailRes = await fetch(`https://api.ammaricano.my.id/api/komiku/detail?url=${encodeURIComponent(found.link)}`)
-              const detailJson = await detailRes.json()
-              if (detailJson.success && detailJson.result) {
-                const chapter = detailJson.result.chapters.find((ch: any) => {
-                  const chSlug = ch.url.split('/').filter(Boolean).pop()
-                  return chSlug === chapterSlug
-                })
-                if (chapter) {
-                  chapterUrl = chapter.url
-                  break
-                }
-              }
-            }
-          }
+
+        if (detailJson.success && detailJson.result) {
+          const foundChapter = detailJson.result.chapters.find((ch: any) => {
+            const chSlug = ch.url.split('/').filter(Boolean).pop()
+            return chSlug === chapterSlug
+          })
+          chapterUrl = foundChapter?.url || ''
         }
+
         if (!chapterUrl) {
           setError('Chapter not found')
           setLoading(false)
           return
         }
+
         // Now fetch chapter images
         const res = await fetch(`https://api.ammaricano.my.id/api/komiku/detail/chapter?url=${encodeURIComponent(chapterUrl)}`)
         const json = await res.json()
@@ -141,7 +143,7 @@ export default function ComicChapterPage() {
   return (
     <div className="max-w-4xl pb-20 -mx-4 md:mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between py-6">
+      <div className="flex items-center justify-between pb-6">
         <button
           onClick={() => router.push(`/comic/${slug}`)}
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group"
@@ -180,24 +182,38 @@ export default function ComicChapterPage() {
         ))}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="flex justify-between items-center mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
-        <button
-          onClick={handlePrev}
-          disabled={!chapter.prev}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-indigo-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Chapter Sebelumnya
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={!chapter.next}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-indigo-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-        >
-          Chapter Selanjutnya
-          <ChevronRight className="w-5 h-5" />
-        </button>
+      <div ref={scrollContainerRef}
+        className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md transition-all duration-500 ease-in-out ${showNav
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-10 pointer-events-none'
+          }`}
+      >
+        <div className="flex items-center justify-between p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+          <button
+            onClick={handlePrev}
+            disabled={!chapter.prev}
+            className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white rounded-xl transition-all disabled:opacity-20 font-bold text-sm"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Prev
+          </button>
+
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Chapter</span>
+            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 italic lowercase tracking-tighter">
+              {chapterSlug.split('-').pop()}
+            </span>
+          </div>
+
+          <button
+            onClick={handleNext}
+            disabled={!chapter.next}
+            className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white rounded-xl transition-all disabled:opacity-20 font-bold text-sm"
+          >
+            Next
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   )

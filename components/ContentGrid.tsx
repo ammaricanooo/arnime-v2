@@ -99,7 +99,12 @@ export default function ContentGrid({
                   />
                   
                   {/* Overlay Gradient Lebih Halus */}
-                  <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 
+bg-linear-to-t from-slate-900 via-transparent to-transparent 
+bg-size-[100%_100%] bg-bottom
+group-hover:from-slate-900
+group-hover:bg-size-[100%_200%]
+transition-all duration-500 ease-out -bottom-1" />
 
                   {/* Play Icon on Hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
