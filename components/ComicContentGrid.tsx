@@ -66,7 +66,7 @@ const HeroSlider = ({ comics }: { comics: Comic[] }) => {
   return (
     <div className="relative w-full mb-8 md:mb-12 rounded-xl md:rounded-2xl overflow-hidden group">
       <div className="relative w-full overflow-hidden rounded-xl md:rounded-2xl bg-slate-900 shadow-xl">
-        <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[350px]">
+        <div className="relative w-full h-[200px] sm:h-[320px] md:h-[380px] lg:h-[350px]">
           {comics.map((comic, index) => {
             const slug = comic.link.split('/').filter(Boolean).pop() || ''
             const posterUrl = comic.image || comic.thumb || "/placeholder.svg"
@@ -84,7 +84,7 @@ const HeroSlider = ({ comics }: { comics: Comic[] }) => {
                   alt={comic.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 via-slate-900/80 to-slate-900/20" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 via-slate-900/20 to-slate-900/0 md:via-slate-900/50 md:to-slate-900/20" />
                 <div className="absolute inset-0 bg-slate-900/70 md:bg-slate-900/20" />
 
                 <div className="absolute inset-0 flex items-end ">
@@ -103,17 +103,17 @@ const HeroSlider = ({ comics }: { comics: Comic[] }) => {
                         )}
                       </div>
 
-                      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight line-clamp-2">
+                      <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight line-clamp-2">
                         {comic.title}
                       </h2>
 
-                      <p className="hidden sm:block text-slate-200 text-sm md:text-base line-clamp-2 md:line-clamp-3">
+                      <p className="block text-slate-200 text-xs md:text-base line-clamp-1 md:line-clamp-3">
                         {comic.description || 'Tidak ada deskripsi tersedia.'}
                       </p>
 
                       <button
                         onClick={() => router.push(`/comic/${slug}`)}
-                        className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-white hover:bg-slate-100 text-slate-900 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 shadow-lg"
+                        className="inline-flex justify-center items-center gap-2 sm:gap-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-white hover:bg-slate-100 text-slate-900 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-base transition-all hover:scale-105 active:scale-95 shadow-lg"
                       >
                         <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                         Baca Sekarang
