@@ -1,13 +1,130 @@
 "use client"
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Loader2, ChevronDown, Shuffle } from 'lucide-react'
+import { Loader2, ChevronDown, Shuffle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import ComicContentGrid, { Comic } from '@/components/ComicContentGrid'
+import { useRouter } from 'next/navigation'
 
 const GENRES = [
   { id: 'hot', label: 'Hot', api: 'https://api.ammaricano.my.id/api/komiku/hot' },
   { id: 'latest', label: 'Latest', api: 'https://api.ammaricano.my.id/api/komiku/latest' },
 ]
 
+// --- Hero Slider Component with Animation ---
+const HeroSlider = ({ comics }: { comics: Comic[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (comics.length === 0) return
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % comics.length)
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [comics.length])
+
+  if (comics.length === 0) return null
+
+  return (
+    <div className="relative w-full mb-8 md:mb-12 rounded-xl md:rounded-2xl overflow-hidden group">
+      <div className="relative w-full overflow-hidden rounded-xl md:rounded-2xl bg-slate-900 shadow-xl">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {comics.map((comic, index) => {
+            const slug = comic.link.split('/').filter(Boolean).pop() || ''
+            const posterUrl = comic.image || comic.thumb || "/placeholder.svg"
+
+            return (
+              <div
+                key={`${comic.link}-${index}`}
+                className="flex-shrink-0 w-full relative h-[240px] sm:h-[320px] md:h-[400px] lg:h-[450px]"
+              >
+                <img
+                  src={posterUrl}
+                  alt={comic.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/40 to-black/20" />
+                <div className="absolute inset-0 bg-black/50 md:bg-black/30" />
+
+                <div className="absolute inset-0 flex items-end ">
+                  <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 pb-6 sm:pb-8 md:pb-12">
+                    <div className="max-w-2xl space-y-2 sm:space-y-3 md:space-y-4">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {comic.type && (
+                          <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">
+                            {comic.type}
+                          </span>
+                        )}
+                        {comic.is_colored && (
+                          <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-green-600 rounded-md sm:rounded-lg text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">
+                            Full Color
+                          </span>
+                        )}
+                        {comic.latest_chapter && (
+                          <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-amber-500 rounded-md sm:rounded-lg text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">
+                            {comic.latest_chapter}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight line-clamp-2">
+                        {comic.title}
+                      </h2>
+
+                      <p className="block text-slate-200 text-sm md:text-base overflow-hidden text-ellipsis whitespace-nowrap line-clamp-1 md:line-clamp-3">
+                        {comic.description || 'Tidak ada deskripsi tersedia.'}
+                      </p>
+
+                      <button
+                        onClick={() => router.push(`/comic/${slug}`)}
+                        className="inline-flex justify-center items-center gap-2 sm:gap-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-white hover:bg-slate-100 text-slate-900 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-base transition-all hover:scale-105 active:scale-95 shadow-lg"
+                      >
+                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                        Baca Sekarang
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={() => setCurrentIndex((prev) => (prev - 1 + comics.length) % comics.length)}
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+      >
+        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+      </button>
+
+      <button
+        onClick={() => setCurrentIndex((prev) => (prev + 1) % comics.length)}
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+      >
+        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+      </button>
+
+      <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
+        {comics.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className={`transition-all duration-300 ${
+              idx === currentIndex
+                ? 'w-4 sm:w-6 md:w-8 h-1.5 sm:h-2 bg-indigo-600'
+                : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/50 hover:bg-white/80'
+            } rounded-full`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function ComicHomePage() {
   const [genre, setGenre] = useState(GENRES[1].id)
@@ -17,6 +134,7 @@ export default function ComicHomePage() {
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [randomComics, setRandomComics] = useState<Comic[]>([])
   const observerTarget = useRef<HTMLDivElement>(null)
 
   // Fetch comics
@@ -72,11 +190,25 @@ export default function ComicHomePage() {
     fetchComics()
   }, [page])
 
+  // Get random comics for slider when comics change
+  useEffect(() => {
+    if (comics.length > 0) {
+      // Shuffle array and take first 5 comics
+      const shuffled = [...comics].sort(() => 0.5 - Math.random())
+      setRandomComics(shuffled.slice(0, 5))
+    }
+  }, [comics])
+
   // Dropdown for genre
   const genreLabel = GENRES.find(g => g.id === genre)?.label || 'Genre'
 
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Hero Slider */}
+      {randomComics.length > 0 && (
+        <HeroSlider comics={randomComics} />
+      )}
+
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         {/* Skeleton untuk Judul */}
         {loading && comics.length === 0 ? (
@@ -98,6 +230,7 @@ export default function ComicHomePage() {
             <div className="h-10 w-56 bg-slate-200 dark:bg-slate-800 rounded shrink-0" />
           </div>
         ) : (
+          <div className="flex justify-end w-full md:w-auto">
           <div className="relative w-56">
             <button
               onClick={() => setDropdownOpen(v => !v)}
@@ -121,6 +254,7 @@ export default function ComicHomePage() {
                 </div>
               </div>
             )}
+            </div>
           </div>
         )}
       </div>

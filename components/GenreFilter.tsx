@@ -29,6 +29,7 @@ export default function GenreFilter({
   }, [])
 
   return (
+    <div className="flex justify-end w-full md:w-auto">
     <div className="relative w-56" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -66,6 +67,7 @@ export default function GenreFilter({
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }
