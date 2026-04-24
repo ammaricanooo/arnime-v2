@@ -279,13 +279,13 @@ export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose
             <button
               onClick={handleLogin}
               disabled={busy}
-              className="flex items-center gap-3 px-3 py-2 bg-white border-t border-gray-200 hover:bg-gray-50 transition disabled:opacity-60 w-full h-13"
+              className="flex items-center gap-3 px-3 py-2 border-t border-slate-200 dark:border-slate-800 disabled:opacity-60 w-full h-13"
             >
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600">
                 <LogIn className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold leading-tight text-gray-900">Sign in</p>
+                <p className="text-sm font-semibold leading-tight dark:text-white">Sign in</p>
                 <p className="text-gray-500 text-xs">Sign in to save your anime</p>
               </div>
             </button>
