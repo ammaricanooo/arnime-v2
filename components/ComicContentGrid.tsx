@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, Loader2 } from 'lucide-react'
+import { BookOpen, Loader2, Trash2, Heart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export interface Comic {
@@ -27,9 +27,12 @@ export interface Comic {
 
 interface ComicContentGridProps {
   comics: Comic[]
+  onLike?: (slug: string) => void
+  likedComics?: string[]
   loading?: boolean
   hasMore?: boolean
   onLoadMore?: () => void
+  variant?: 'default' | 'history'
 }
 
 // --- Skeleton Loader Component ---
@@ -41,21 +44,21 @@ const ComicCardSkeleton = () => (
 
 export default function ComicContentGrid({
   comics,
+  onLike = () => {},
+  likedComics = [],
   loading = false,
   hasMore = true,
   onLoadMore,
+  variant = 'default',
 }: ComicContentGridProps) {
   const router = useRouter()
 
   const getDisplayInfo = (comic: Comic): { badge: string; badgeColor: string } => {
-    if (comic.latest_chapter) {
-      return { badge: comic.latest_chapter, badgeColor: 'bg-indigo-600' }
-    }
-    if (comic.chapter) {
-      return { badge: comic.chapter, badgeColor: 'bg-green-600' }
+    if (comic.readers) {
+      return { badge: `${comic.readers}`, badgeColor: 'bg-linear-to-r from-indigo-600 to-indigo-700/0' }
     }
     if (comic.update) {
-      return { badge: comic.update, badgeColor: 'bg-amber-500' }
+      return { badge: comic.update, badgeColor: 'bg-linear-to-r from-indigo-600 to-indigo-700/0' }
     }
     return { badge: 'N/A', badgeColor: 'bg-slate-600' }
   }
@@ -72,6 +75,9 @@ export default function ComicContentGrid({
             const slug = comic.link.split('/').filter(Boolean).pop() || ''
             const posterUrl = comic.image || comic.thumb || "/placeholder.svg"
             const { badge, badgeColor } = getDisplayInfo(comic)
+            const isLiked = likedComics.includes(slug)
+            const topBadgeText = comic.time || comic.update
+            const showBadge = !!topBadgeText || badge !== 'N/A'
 
             return (
               <div
@@ -98,15 +104,30 @@ export default function ComicContentGrid({
                     </div>
                   </div>
 
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onLike(slug)
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-white/10 backdrop-blur-md hover:bg-white/20 rounded-xl transition-all z-10"
+                  >
+                    {variant === 'history' ? (
+                      <Trash2 className="w-4 h-4 text-white hover:text-red-400" />
+                    ) : (
+                      <Heart
+                        className={`w-4 h-4 transition-all ${isLiked ? "fill-red-500 text-red-500 scale-110" : "text-white"}`}
+                      />
+                    )}
+                  </button>
+
                   {/* Badges */}
-                  <div className={`absolute top-2 left-2 flex items-center gap-1 px-1.5 md:px-2.5 py-0.5 md:py-1 ${badgeColor} rounded-md md:rounded-lg text-[8px] md:text-[10px] font-black text-white shadow-lg`}>
-                    {badge.toUpperCase()}
-                  </div>
-                  {comic.time && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 md:px-2.5 py-0.5 md:py-1 bg-indigo-600 rounded-md md:rounded-lg text-[8px] md:text-[10px] font-black text-white shadow-lg">
-                      {comic.time}
+                  {showBadge && (
+                    <div className={`absolute top-2 left-2 flex flex-col items-start gap-1 px-2 md:px-3 py-1 ${badgeColor} rounded-md md:rounded-lg text-[8px] md:text-[10px] font-black text-white shadow-lg`}>
+                      {topBadgeText && <span>{topBadgeText}</span>}
+                      {badge !== 'N/A' && <span>{badge.toUpperCase()}</span>}
                     </div>
                   )}
+
 
                   {/* Info Section */}
                   <div className="absolute bottom-0 left-0 right-0 p-2 md:p-3 space-y-0.5 md:space-y-1">

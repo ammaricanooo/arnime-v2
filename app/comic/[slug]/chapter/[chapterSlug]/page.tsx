@@ -36,25 +36,21 @@ export default function ComicChapterPage() {
   const [chapter, setChapter] = useState<ChapterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
-  const [showNav, setShowNav] = useState(false);
+  const [showNav, setShowNav] = useState(false)
+  const viewerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      // Sekarang kita cek scrollTop dari elemen tersebut
-      if (container.scrollTop > 50) {
-        setShowNav(true);
-      } else {
-        setShowNav(false);
+    const main = document.querySelector('main')
+    if (main) {
+      const handleScroll = () => {
+        setShowNav(main.scrollTop > 10)
       }
-    };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+      handleScroll()
+      main.addEventListener('scroll', handleScroll, { passive: true })
+      return () => main.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
 
   useEffect(() => {
     if (!slug || !chapterSlug) return
@@ -66,6 +62,8 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
         const detailRes = await fetch(`https://api.ammaricano.my.id/api/komiku/detail?url=${encodeURIComponent(comicUrl)}`)
         const detailJson = await detailRes.json()
         let chapterUrl = ''
+        const comicTitle = detailJson?.result?.title || 'Comic Chapter'
+        const comicPoster = detailJson?.result?.thumbnail || ''
 
         if (detailJson.success && detailJson.result) {
           const foundChapter = detailJson.result.chapters.find((ch: any) => {
@@ -81,26 +79,24 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
           return
         }
 
-        // Now fetch chapter images
         const res = await fetch(`https://api.ammaricano.my.id/api/komiku/detail/chapter?url=${encodeURIComponent(chapterUrl)}`)
         const json = await res.json()
         if (json.success && json.result) {
           setChapter(json.result)
-          // Save to history
           if (user && slug) {
             try {
-              await setDoc(doc(db, "history", `${user.uid}_${slug}`), {
+              await setDoc(doc(db, 'history', `${user.uid}_${slug}`), {
                 userId: user.uid,
                 slug,
-                title: "Comic Chapter", // We don't have comic title here, maybe fetch from detail
-                poster: "", // No poster for chapter
+                title: comicTitle,
+                poster: comicPoster,
                 lastEpisodeName: chapterSlug,
                 lastEpisodeSlug: chapterSlug,
-                type: "comic",
+                type: 'comic',
                 lastWatched: new Date().toISOString(),
               }, { merge: true })
             } catch (err) {
-              console.error("Gagal simpan history:", err)
+              console.error('Gagal simpan history:', err)
             }
           }
         } else {
@@ -113,7 +109,7 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
       }
     }
     fetchChapter()
-  }, [slug, chapterSlug])
+  }, [slug, chapterSlug, user])
 
   if (!slug || !chapterSlug) return notFound()
 
@@ -141,17 +137,17 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
   }
 
   return (
-    <div className="max-w-4xl pb-20 -mx-4 md:mx-auto">
+    <div className="relative max-w-4xl pb-20 -mx-4 md:mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between pb-6">
+      <div className="flex items-center justify-between pb-6 gap-3 flex-wrap">
         <button
           onClick={() => router.push(`/comic/${slug}`)}
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="tracking-tighter">Kembali ke Detail Komik</span>
+          <span className="tracking-tighter">Back</span>
         </button>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={handlePrev}
             disabled={!chapter.prev}
@@ -170,7 +166,7 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
       </div>
 
       {/* Images */}
-      <div className={comicGap ? 'space-y-4' : ''}>
+      <div ref={viewerRef} className={comicGap ? 'space-y-4' : ''}>
         {chapter.images.map((img, idx) => (
           <img
             key={idx}
@@ -182,8 +178,8 @@ const scrollContainerRef = useRef<HTMLDivElement>(null); // Tambahkan ini
         ))}
       </div>
 
-      <div ref={scrollContainerRef}
-        className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md transition-all duration-500 ease-in-out ${showNav
+      <div
+        className={`fixed bottom-4 left-1/2 md:left-[calc(50%+8rem)] -translate-x-1/2 z-[9999] w-[92%] max-w-md transition-all duration-500 ease-in-out ${showNav
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 translate-y-10 pointer-events-none'
           }`}

@@ -85,7 +85,7 @@ export default function LiveTVWatchPage() {
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="tracking-tighter">Kembali Ke Halaman Daftar Live TV</span>
+        <span className="tracking-tighter">Back</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

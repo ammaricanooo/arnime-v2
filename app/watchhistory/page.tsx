@@ -74,9 +74,12 @@ export default function HistoryPage() {
   const handleDeleteHistory = async (slug: string, type?: string) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, "history", `${user.uid}_${slug}`));
+      await deleteDoc(doc(db, "history", `${user.uid}_${slug}`))
       if (type === "comic") {
-        setComicHistory(prev => prev.filter(item => item.link.split('/').pop() !== slug));
+        setComicHistory(prev => prev.filter(item => {
+          const itemSlug = item.link.split('/').filter(Boolean).pop()
+          return itemSlug !== slug
+        }))
       } else {
         setHistory(prev => prev.filter(item => item.slug !== slug));
       }
@@ -126,8 +129,11 @@ export default function HistoryPage() {
               <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Comic History</h2>
               <ComicContentGrid
                 comics={comicHistory}
+                onLike={(slug) => handleDeleteHistory(slug, "comic")}
+                likedComics={comicHistory.map((item) => item.link.split('/').filter(Boolean).pop() || '')}
                 loading={false}
                 hasMore={false}
+                variant="history"
               />
             </div>
           )}

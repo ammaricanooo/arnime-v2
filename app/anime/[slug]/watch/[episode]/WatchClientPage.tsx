@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Download, ChevronDown, Share2, Loader2, Play, Info } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import useAuth from '@/lib/useAuth'
 import Swal from 'sweetalert2'
 
 // --- Skeleton Component untuk Halaman Nonton ---
@@ -53,6 +54,7 @@ interface WatchProps {
 
 export default function WatchClientPage({ slug, episode: episodeSlug }: WatchProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [episodeData, setEpisodeData] = useState<EpisodeDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +62,9 @@ export default function WatchClientPage({ slug, episode: episodeSlug }: WatchPro
   const [iframeSrc, setIframeSrc] = useState<string | null>(null)
   const [iframeLoading, setIframeLoading] = useState(false)
   const [iframeError, setIframeError] = useState<string | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const watchContainerRef = useRef<HTMLDivElement | null>(null)
+  const [poster, setPoster] = useState<string>('')
 
   useEffect(() => {
     const fetchEpisode = async () => {
@@ -71,6 +76,13 @@ export default function WatchClientPage({ slug, episode: episodeSlug }: WatchPro
 
         if (data?.result) {
           setEpisodeData(data.result)
+
+          // Fetch poster from anime detail
+          const detailRes = await fetch(`https://api.ammaricano.my.id/api/otakudesu/detail/${encodeURIComponent(slug)}`)
+          const detailJson = await detailRes.json()
+          if (detailJson.success && detailJson.result?.poster) {
+            setPoster(detailJson.result.poster)
+          }
 
           // PRIORITAS 1: Gunakan stream_url bawaan jika ada
           if (data.result.stream_url) {
@@ -128,6 +140,31 @@ export default function WatchClientPage({ slug, episode: episodeSlug }: WatchPro
     }
   }
 
+  const saveHistory = async () => {
+    if (!slug || !episodeData?.title || !user) return
+
+    try {
+      const { doc, setDoc } = await import('firebase/firestore')
+      const { db } = await import('@/lib/firebase')
+      await setDoc(doc(db, 'history', `${user.uid}_${slug}`), {
+        userId: user.uid,
+        slug,
+        title: episodeData.title,
+        poster: poster,
+        lastEpisodeName: episodeData.title,
+        lastEpisodeSlug: episodeSlug,
+        lastWatched: new Date().toISOString(),
+      }, { merge: true })
+    } catch (err) {
+      console.error('Gagal simpan history:', err)
+    }
+  }
+
+  useEffect(() => {
+    if (!episodeData) return
+    saveHistory()
+  }, [episodeData, episodeSlug, slug, user])
+
   const handleShare = async () => {
     const url = window.location.href
     if (navigator.share) {
@@ -164,7 +201,7 @@ export default function WatchClientPage({ slug, episode: episodeSlug }: WatchPro
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group mb-8"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="tracking-tighter">Kembali Ke Halaman Detail Anime</span>
+        <span className="tracking-tighter">Back</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

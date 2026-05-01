@@ -2,7 +2,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Loader2, ChevronDown, Shuffle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import ComicContentGrid, { Comic } from '@/components/ComicContentGrid'
+import { doc, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase"
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
+import useAuth from '@/lib/useAuth';
 
 const GENRES = [
   { id: 'hot', label: 'Hot', api: 'https://api.ammaricano.my.id/api/komiku/hot' },
@@ -114,11 +118,10 @@ const HeroSlider = ({ comics }: { comics: Comic[] }) => {
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`transition-all duration-300 ${
-              idx === currentIndex
+            className={`transition-all duration-300 ${idx === currentIndex
                 ? 'w-4 sm:w-6 md:w-8 h-1.5 sm:h-2 bg-indigo-600'
                 : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/50 hover:bg-white/80'
-            } rounded-full`}
+              } rounded-full`}
           />
         ))}
       </div>
@@ -135,7 +138,9 @@ export default function ComicHomePage() {
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [randomComics, setRandomComics] = useState<Comic[]>([])
+  const [likedComics, setlikedComics] = useState<string[]>([])
   const observerTarget = useRef<HTMLDivElement>(null)
+  const { user } = useAuth()
 
   // Fetch comics
   const fetchComics = useCallback(async (reset = false) => {
@@ -202,6 +207,45 @@ export default function ComicHomePage() {
   // Dropdown for genre
   const genreLabel = GENRES.find(g => g.id === genre)?.label || 'Genre'
 
+  const handleLike = async (slug: string) => {
+    if (!user) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "You need to login first to save your favorite anime!"
+      });
+      return;
+    }
+
+    const isAlreadyLiked = likedComics.includes(slug);
+    const docId = `${user.uid}_${slug}`;
+    const docRef = doc(db, "bookmarks", docId);
+
+    try {
+      if (isAlreadyLiked) {
+        await deleteDoc(docRef);
+        setlikedComics(prev => prev.filter(s => s !== slug));
+      } else {
+        const comicToSave = comics.find(c => c.link.includes(slug));
+
+        setlikedComics(prev => [...prev, slug]);
+
+        await setDoc(docRef, {
+          userId: user.uid,
+          slug,
+          title: comicToSave?.title,
+          poster: comicToSave?.image,
+          type: "comic",
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Firestore Error:", error);
+      if (!isAlreadyLiked) setlikedComics(prev => prev.filter(s => s !== slug));
+      alert("Gagal menyimpan ke favorit.");
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Hero Slider */}
@@ -231,29 +275,29 @@ export default function ComicHomePage() {
           </div>
         ) : (
           <div className="flex justify-end w-full md:w-auto">
-          <div className="relative w-56">
-            <button
-              onClick={() => setDropdownOpen(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
-            >
-              <span className="text-sm font-medium">{genreLabel}</span>
-              <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} />
-            </button>
-            {dropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
-                <div className="py-1 max-h-64 overflow-y-auto">
-                  {GENRES.map(g => (
-                    <button
-                      key={g.id}
-                      onClick={() => { setGenre(g.id); setDropdownOpen(false) }}
-                      className={`w-full cursor-pointer text-left px-4 py-2.5 text-sm transition-colors ${genre === g.id ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 font-semibold' : 'text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                    >
-                      {g.label}
-                    </button>
-                  ))}
+            <div className="relative w-56">
+              <button
+                onClick={() => setDropdownOpen(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
+              >
+                <span className="text-sm font-medium">{genreLabel}</span>
+                <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                  <div className="py-1 max-h-64 overflow-y-auto">
+                    {GENRES.map(g => (
+                      <button
+                        key={g.id}
+                        onClick={() => { setGenre(g.id); setDropdownOpen(false) }}
+                        className={`w-full cursor-pointer text-left px-4 py-2.5 text-sm transition-colors ${genre === g.id ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 font-semibold' : 'text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </div>
         )}
@@ -261,6 +305,8 @@ export default function ComicHomePage() {
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <ComicContentGrid
         comics={comics}
+        onLike={handleLike}
+        likedComics={likedComics}
         loading={loading && comics.length === 0}
         hasMore={false} // Kita pakai observerTarget di bawah untuk infinite scroll
       />
