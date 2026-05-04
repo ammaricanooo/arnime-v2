@@ -1,10 +1,13 @@
 'use client'
 
-import { House, Flame, Star, History, Tv, Calendar, LogOut, LogIn, GalleryVertical, Settings } from 'lucide-react'
-import { useState, useRef, useEffect } from "react"
-import useAuth from "@/lib/useAuth"
-import { signInWithGoogle, signOutUser } from "@/lib/firebase"
-import Swal from "sweetalert2"
+import {
+  House, Flame, Star, History, Tv, Calendar,
+  LogOut, LogIn, GalleryVertical, Settings, Users,
+} from 'lucide-react'
+import { useRef, useState } from 'react'
+import useAuth from '@/lib/useAuth'
+import { useAuthActions } from '@/lib/useAuthActions'
+import LoginModal from './LoginModal'
 
 interface SidebarProps {
   activeTab: string
@@ -14,284 +17,206 @@ interface SidebarProps {
   isCollapsed?: boolean
 }
 
-export default function Sidebar({ activeTab, onTabChange, isOpen = true, onClose, isCollapsed = false }: SidebarProps) {
+const MENU_GROUPS = [
+  {
+    title: 'Anime',
+    items: [
+      { id: 'home', label: 'Home', icon: House },
+      { id: 'complete', label: 'Complete', icon: Flame },
+      { id: 'schedule', label: 'Schedule', icon: Calendar },
+    ],
+  },
+  {
+    title: 'Comic',
+    items: [{ id: 'comic', label: 'Comic', icon: GalleryVertical }],
+  },
+  {
+    title: 'TV',
+    items: [{ id: 'livetv', label: 'Live TV', icon: Tv }],
+  },
+]
+
+const BOTTOM_ITEMS = [
+  { id: 'favorites', label: 'Favorites', icon: Star },
+  { id: 'watchhistory', label: 'Watch History', icon: History },
+  { id: 'watchparty', label: 'Watch Party', icon: Users },
+  { id: 'settings', label: 'Settings', icon: Settings },
+]
+
+export default function Sidebar({
+  activeTab,
+  onTabChange,
+  isOpen = true,
+  onClose,
+  isCollapsed = false,
+}: SidebarProps) {
   const { user } = useAuth()
-  const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const { busy, loginWith, logout } = useAuthActions(user)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
-  console.log(user);
-
-
-  // close dropdown kalau klik luar
-  useEffect(() => {
-    const handleClickOutside = (e: Event) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
-
-    const justLoggedIn = sessionStorage.getItem("justLoggedIn")
-    if (!justLoggedIn) return
-
-    sessionStorage.removeItem("justLoggedIn")
-
-    Swal.fire({
-      title: "Signed in",
-      text: "You have been successfully logged in",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    })
-  }, [user])
-
-  useEffect(() => {
-    if (user) {
-      setBusy(false)
-    }
-  }, [user])
-
-  const handleLogin = async () => {
-    setBusy(true)
-    try {
-      sessionStorage.setItem("justLoggedIn", "true")
-      await signInWithGoogle()
-    } catch (err) {
-      console.error("Login error", err)
-      sessionStorage.removeItem("justLoggedIn")
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to sign in",
-        icon: "error",
-      })
-      setBusy(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    const result = await Swal.fire({
-      title: "Sign out?",
-      text: "You will be logged out from your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, sign out",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#4f46e5",
-      cancelButtonColor: "#6b7280",
-    })
-
-    if (!result.isConfirmed) return
-
-    setBusy(true)
-    try {
-      await signOutUser()
-      await Swal.fire({
-        title: "Signed out",
-        text: "You have been successfully logged out",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      })
-    } catch (err) {
-      console.error("Logout error", err)
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to sign out",
-        icon: "error",
-      })
-    } finally {
-      setBusy(false)
-    }
-    setOpen(false)
-  }
-
-
-  const menuGroups = [
-    {
-      title: "Anime",
-      items: [
-        { id: "home", label: "Home", icon: House },
-        { id: "complete", label: "Complete", icon: Flame },
-        { id: "schedule", label: "Schedule", icon: Calendar },
-      ],
-    },
-    {
-      title: "Comic",
-      items: [
-        { id: "comic", label: "Comic", icon: GalleryVertical },
-      ],
-    },
-    {
-      title: "TV",
-      items: [
-        { id: "livetv", label: "Live TV", icon: Tv },
-      ],
-    },
-  ]
-
-  const bottomItems = [
-    { id: "favorites", label: "Favorites", icon: Star },
-    { id: "watchhistory", label: "Watch History", icon: History },
-    { id: "settings", label: "Settings", icon: Settings },
-  ]
 
   const handleTabChange = (tab: string) => {
     onTabChange(tab)
-    if (window.innerWidth < 768) {
-      onClose?.()
-    }
+    if (typeof window !== 'undefined' && window.innerWidth < 768) onClose?.()
   }
+
+  const navItemClass = (isActive: boolean) =>
+    `flex items-center w-full gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
+      isActive
+        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+    } ${isCollapsed ? 'justify-center px-2' : ''}`
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          aria-hidden="true"
         />
       )}
 
-      {/* Sidebar - Full height from top */}
       <aside
-        className={`fixed md:static left-0 top-16 h-full bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 overflow-y-auto overflow-x-hidden z-40 flex flex-col transition-all duration-300 custom-scroll ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'
-          } ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-          }`}
+        className={`
+          fixed md:static left-0 top-0 h-full z-40 flex flex-col
+          bg-white dark:bg-slate-900
+          border-r border-slate-200 dark:border-slate-800
+          overflow-y-auto overflow-x-hidden
+          transition-all duration-300
+          ${isCollapsed ? 'w-16 md:w-16' : 'w-64 md:w-64'}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
       >
-        {/* Logo Section */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
-          <div className={`flex items-center gap-3 ${isCollapsed ? 'flex-col' : ''}`}>
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img src="/arnime.svg" alt="" />
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Arnime</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">v2.0</span>
-              </div>
-            )}
+        {/* Logo */}
+        <div className="h-14 px-4 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <div className="w-8 h-8 shrink-0 overflow-hidden">
+            <img src="/arnime.svg" alt="Arnime" className="w-8 h-8 object-contain" />
           </div>
+          {!isCollapsed && (
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-none">Arnime</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">v2.0</p>
+            </div>
+          )}
         </div>
 
-        <nav className="flex flex-col p-3 space-y-6 flex-1 w-full">
-
-          {menuGroups.map((group) => (
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-5 overflow-y-auto custom-scroll">
+          {MENU_GROUPS.map((group) => (
             <div key={group.title}>
-              {/* SECTION TITLE */}
               {!isCollapsed && (
-                <p className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <p className="px-3 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {group.title}
                 </p>
               )}
-
-              {/* ITEMS */}
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const IconComponent = item.icon
-                  const isActive = activeTab === item.id
-
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleTabChange(item.id)}
-                      className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${isActive
-                        ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        } ${isCollapsed ? "justify-center px-2" : ""}`}
-                      title={isCollapsed ? item.label : ""}
-                    >
-                      <IconComponent className="w-5 h-5 shrink-0" />
-                      {!isCollapsed && <span>{item.label}</span>}
-                    </button>
-                  )
-                })}
+              <div className="space-y-0.5">
+                {group.items.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => handleTabChange(id)}
+                    className={navItemClass(activeTab === id)}
+                    title={isCollapsed ? label : undefined}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>{label}</span>}
+                  </button>
+                ))}
               </div>
             </div>
           ))}
-          {/* separator */}
-          <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
 
-          {/* bottom items */}
-          <div className="space-y-1">
-            {bottomItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all text-sm ${isActive
-                      ? "bg-linear-to-r from-indigo-600 to-indigo-700 text-white"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    } ${isCollapsed ? "justify-center px-2" : ""}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {!isCollapsed && <span>{item.label}</span>}
-                </button>
-              )
-            })}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-0.5">
+            {!isCollapsed && (
+              <p className="px-3 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Library
+              </p>
+            )}
+            {BOTTOM_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => handleTabChange(id)}
+                className={navItemClass(activeTab === id)}
+                title={isCollapsed ? label : undefined}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {!isCollapsed && <span>{label}</span>}
+              </button>
+            ))}
           </div>
         </nav>
 
-        <div ref={ref} className="relative inline-block w-full mb-16 md:mb-0"> {/* Berikan lebar tetap agar tidak 'loncat' */}
+        {/* User section */}
+        <div ref={ref} className="relative border-t border-slate-200 dark:border-slate-800 shrink-0">
           {user ? (
-            <>
-              {/* CARD SAAT LOGIN */}
-              <div
-                onClick={() => setOpen(!open)}
-                className="relative flex items-center gap-3 px-3 py-2 border-t border-slate-200 dark:border-slate-800 cursor-pointer transition h-13"
+            <div className="relative">
+              {/* User card — click to open sign-out dropdown */}
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="flex items-center gap-3 w-full px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <img
                   src={user.photoURL || '/default-avatar.png'}
                   alt="avatar"
                   className="w-8 h-8 rounded-full object-cover shrink-0"
                   referrerPolicy="no-referrer"
-                  loading='lazy'
+                  loading="lazy"
                 />
-                <div className="text-sm truncate">
-                  <p className="font-semibold leading-tight truncate dark:text-white">{user.displayName}</p>
-                  <p className="text-gray-500 text-xs truncate">{user.email}</p>
-                </div>
-                {/* DROPDOWN LOGOUT */}
-                {open && (
-                  <div className="w-fit p-1 z-50">
-                    <button
-                      onClick={handleLogout}
-                      disabled={busy}
-                      className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition disabled:opacity-60"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </button>
+                {!isCollapsed && (
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-semibold truncate text-slate-900 dark:text-slate-100 leading-tight">
+                      {user.displayName}
+                    </p>
+                    <p className="text-xs text-slate-400 truncate">{user.email}</p>
                   </div>
                 )}
-              </div>
-            </>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-50">
+                  <button
+                    onClick={() => { logout(); setUserMenuOpen(false) }}
+                    disabled={busy}
+                    className="flex items-center gap-2 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-60"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
-            /* TOMBOL SAAT BELUM LOGIN (Dibuat identik secara dimensi) */
+            /* Single "Sign in" button — opens modal */
             <button
-              onClick={handleLogin}
+              onClick={() => setLoginModalOpen(true)}
               disabled={busy}
-              className="flex items-center gap-3 px-3 py-2 border-t border-slate-200 dark:border-slate-800 disabled:opacity-60 w-full h-13"
+              className="flex items-center gap-3 w-full px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-60"
+              title={isCollapsed ? 'Sign in' : undefined}
             >
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600">
-                <LogIn className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                <LogIn className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold leading-tight dark:text-white">Sign in</p>
-                <p className="text-gray-500 text-xs">Sign in to save your anime</p>
-              </div>
+              {!isCollapsed && (
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-tight">Sign in</p>
+                  <p className="text-xs text-slate-400">Save your favorites</p>
+                </div>
+              )}
             </button>
           )}
         </div>
       </aside>
+
+      {/* Login modal — rendered outside aside so it covers full screen */}
+      <LoginModal
+        open={loginModalOpen}
+        busy={busy}
+        onClose={() => setLoginModalOpen(false)}
+        onLoginGoogle={() => { loginWith('google'); setLoginModalOpen(false) }}
+        onLoginGithub={() => { loginWith('github'); setLoginModalOpen(false) }}
+      />
     </>
   )
 }

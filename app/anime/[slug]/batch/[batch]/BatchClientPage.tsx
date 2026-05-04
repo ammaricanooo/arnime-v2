@@ -1,25 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Download, ChevronDown, Share2, Info, Box } from 'lucide-react'
+import { fetchJson } from '@/lib/fetchJson'
+import type { BatchDetail } from '@/lib/types'
+import { ArrowLeft, Download, Share2, Info, Box } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
-// Interface disesuaikan dengan respons API Batch kamu
-interface BatchDownloadItem {
-  provider: string
-  link: string
-}
-
-interface BatchResolution {
-  resolution: string
-  downloads: BatchDownloadItem[]
-}
-
-interface BatchDetail {
-  title: string
-  batch: BatchResolution[]
-}
+// Interfaces are imported from @/lib/types
 
 interface BatchProps {
   slug: string      // slug anime
@@ -37,15 +25,15 @@ export default function BatchClientPage({ slug, batch: batchSlug }: BatchProps) 
       setLoading(true)
       try {
         const { fetchJson } = await import('@/lib/fetchJson')
-        const res = await fetchJson(`https://api.ammaricano.my.id/api/otakudesu/batch/${encodeURIComponent(batchSlug)}`)
+        const res = await fetchJson<{ result: BatchDetail }>(`https://api.ammaricano.my.id/api/otakudesu/batch/${encodeURIComponent(batchSlug)}`)
 
         if (res?.result) {
           setData(res.result)
         } else {
           setError('Data batch tidak ditemukan')
         }
-      } catch (err: any) {
-        setError(err.message || 'Gagal memuat data batch')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat data batch')
       } finally {
         setLoading(false)
       }

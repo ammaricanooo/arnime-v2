@@ -1,146 +1,116 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
-import useAuth from "@/lib/useAuth";
-import ContentGrid from "@/components/ContentGrid";
-import ComicContentGrid, { Comic } from "@/components/ComicContentGrid";
-import { Loader2, HeartOff } from "lucide-react";
-
-interface BookmarkData {
-  userId: string;
-  slug: string;
-  title: string;
-  poster: string;
-  type?: string;
-  createdAt: string;
-  id: string;
-}
+import { useEffect, useState } from "react"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore"
+import useAuth from "@/lib/useAuth"
+import ContentGrid from "@/components/ContentGrid"
+import ComicContentGrid from "@/components/ComicContentGrid"
+import PageHeader from "@/components/ui/PageHeader"
+import EmptyState from "@/components/ui/EmptyState"
+import { Loader2 } from "lucide-react"
+import type { AnimeItem, Comic } from "@/lib/types"
 
 export default function FavoritesPage() {
-  const { user, loading: authLoading } = useAuth();
-  const [favorites, setFavorites] = useState<any[]>([])
-  const [comicFavorites, setComicFavorites] = useState<Comic[]>([])
+  const { user, loading: authLoading } = useAuth()
+  const [animes, setAnimes] = useState<AnimeItem[]>([])
+  const [comics, setComics] = useState<Comic[]>([])
   const [loading, setLoading] = useState(true)
-  const fetchFavorites = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const q = query(collection(db, "bookmarks"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      const data: BookmarkData[] = querySnapshot.docs.map(doc => ({
-        ...(doc.data() as Omit<BookmarkData, 'id'>),
-        id: doc.id
-      }));
-      const animeFavs = data.filter(item => !item.type || item.type !== "comic");
-      const comicFavs = data.filter(item => item.type === "comic").map(item => ({
-        title: item.title,
-        link: `https://komiku.org/manga/${item.slug}/`, // Reconstruct link
-        thumb: item.poster,
-        image: item.poster,
-        genre: "",
-        latest_chapter: "",
-        info: "",
-        chapter: "",
-        type: "Comic",
-        update: "",
-      }));
-      setFavorites(animeFavs);
-      setComicFavorites(comicFavs);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchFavorites();
-    }
-  }, [user, authLoading]);
+    if (authLoading || !user) { setLoading(false); return }
 
-  const handleUnlike = async (slug: string, type?: string) => {
-    if (!user) return;
+    setLoading(true)
+    getDocs(query(collection(db, "bookmarks"), where("userId", "==", user.uid)))
+      .then((snap) => {
+        const all = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Record<string, unknown> & { id: string })
 
-    try {
-      const docId = `${user.uid}_${slug}`;
-      await deleteDoc(doc(db, "bookmarks", docId));
-      if (type === "comic") {
-        setComicFavorites(prev => prev.filter(comic => comic.link.split('/').pop() !== slug));
-      } else {
-        setFavorites(prev => prev.filter(anime => anime.slug !== slug));
-      }
-    } catch (error) {
-      console.error("Gagal menghapus favorit:", error);
-    }
-  };
+        setAnimes(
+          all
+            .filter((item) => item.type !== "comic")
+            .map((item) => ({
+              title: String(item.title ?? ""),
+              slug: String(item.slug ?? ""),
+              poster: String(item.poster ?? ""),
+              newest_release_date: "",
+            }))
+        )
 
-  if (authLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    );
+        setComics(
+          all
+            .filter((item) => item.type === "comic")
+            .map((item) => ({
+              title: String(item.title ?? ""),
+              link: `https://komiku.org/manga/${item.slug}/`,
+              image: String(item.poster ?? ""),
+              thumb: String(item.poster ?? ""),
+            }))
+        )
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [user, authLoading])
+
+  const removeAnime = async (slug: string) => {
+    if (!user) return
+    await deleteDoc(doc(db, "bookmarks", `${user.uid}_${slug}`)).catch(() => {})
+    setAnimes((prev) => prev.filter((a) => a.slug !== slug))
   }
 
-  // State: Belum Login
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">My Favorites</h1>
-          <img src="Forbidden.png" alt="Forbidden" className="w-84" />
-          <p className="text-slate-600 dark:text-slate-400">Please login first to see your favorite collection.</p>
-        </div>
-    );
+  const removeComic = async (slug: string) => {
+    if (!user) return
+    await deleteDoc(doc(db, "bookmarks", `${user.uid}_${slug}`)).catch(() => {})
+    setComics((prev) => prev.filter((c) => c.link.split("/").filter(Boolean).pop() !== slug))
   }
+
+  if (authLoading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+
+  if (!user) return (
+    <EmptyState
+      image="/Forbidden.png"
+      title="My Favorites"
+      description="Please sign in to see your favorites."
+    />
+  )
 
   return (
-    <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">My Favorites</h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
-          You have {favorites.length} favorite anime{favorites.length > 0 && comicFavorites.length > 0 ? ' and ' : ''}{comicFavorites.length > 0 ? `${comicFavorites.length} favorite comic` : ''}
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="My Favorites"
+        description={`${animes.length} anime · ${comics.length} comic`}
+      />
 
       {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-        </div>
-      ) : (favorites.length > 0 || comicFavorites.length > 0) ? (
-        <>
-          {favorites.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Anime Favorites</h2>
+        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-indigo-600" /></div>
+      ) : animes.length === 0 && comics.length === 0 ? (
+        <EmptyState image="/NotFound.png" description="No favorites yet. Start adding some!" />
+      ) : (
+        <div className="space-y-10">
+          {animes.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">Anime</h2>
               <ContentGrid
-                animes={favorites}
-                onLike={(slug) => handleUnlike(slug)}
-                likedAnimes={favorites.map(f => f.slug)}
+                animes={animes}
+                onLike={removeAnime}
+                likedAnimes={animes.map((a) => a.slug)}
                 type="ongoing"
                 hasMore={false}
               />
-            </div>
+            </section>
           )}
-          {comicFavorites.length > 0 && (
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Comic Favorites</h2>
+          {comics.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">Comics</h2>
               <ComicContentGrid
-                comics={comicFavorites}
-                loading={false}
+                comics={comics}
+                onLike={removeComic}
+                likedComics={comics.map((c) => c.link.split("/").filter(Boolean).pop() ?? "")}
                 hasMore={false}
               />
-            </div>
+            </section>
           )}
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-          <img src="NotFound.png" alt="Not Found" className="w-84" />
-          <p className="text-slate-600 dark:text-slate-400">There is no anime or comic that you like yet.</p>
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -2,17 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchJson } from '@/lib/fetchJson'
+import type { ScheduleDay } from '@/lib/types'
 import { Calendar, ChevronRight, Info } from 'lucide-react'
 
-interface ScheduleAnime {
-    judul: string
-    slug: string
-}
-
-interface ScheduleDay {
-    hari: string
-    anime: ScheduleAnime[]
-}
+// Types imported from @/lib/types
 
 // --- Skeleton Component ---
 const ScheduleSkeleton = () => (
@@ -46,8 +40,7 @@ export default function SchedulePage() {
             setLoading(true)
             setError(null)
             try {
-                const { fetchJson } = await import('@/lib/fetchJson')
-                const data = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/schedule')
+                const data = await fetchJson<{ result: ScheduleDay[] }>('https://api.ammaricano.my.id/api/otakudesu/schedule')
 
                 if (data && data.result && Array.isArray(data.result)) {
                     setSchedule(data.result)

@@ -67,5 +67,45 @@ export async function generateMetadata(
 
 export default async function Page({ params }: Props) {
   const { slug } = await params
-  return <AnimeClientPage slug={slug} />
+
+  // Fetch for structured data
+  let structuredData: object | null = null
+  try {
+    const res = await fetch(
+      `https://api.ammaricano.my.id/api/otakudesu/detail/${encodeURIComponent(slug)}`,
+      { cache: 'no-store' }
+    )
+    const json = await res.json()
+    const anime = json?.result
+    if (anime) {
+      structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'TVSeries',
+        name: anime.title,
+        description: anime.synopsis?.slice(0, 300),
+        image: anime.poster,
+        genre: anime.genre?.split(',').map((g: string) => g.trim()),
+        numberOfEpisodes: anime.total_episode,
+        productionCompany: anime.studio ? { '@type': 'Organization', name: anime.studio } : undefined,
+        datePublished: anime.release_date,
+        aggregateRating: anime.score
+          ? { '@type': 'AggregateRating', ratingValue: anime.score, bestRating: '10' }
+          : undefined,
+      }
+    }
+  } catch {
+    // structured data is non-critical
+  }
+
+  return (
+    <>
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
+      <AnimeClientPage slug={slug} />
+    </>
+  )
 }

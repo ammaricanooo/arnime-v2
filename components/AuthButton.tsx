@@ -1,116 +1,36 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
 import useAuth from "@/lib/useAuth"
-import { signInWithGoogle, signOutUser } from "@/lib/firebase"
-import { LogIn, LogOut } from "lucide-react"
-import Swal from "sweetalert2"
+import { useAuthActions } from "@/lib/useAuthActions"
+import { LogIn, LogOut, Loader2 } from "lucide-react"
 
 export default function AuthButton() {
   const { user, loading } = useAuth()
-  const [busy, setBusy] = useState(false)
-
-  console.log("AuthButton render, user:", user)
-
-  useEffect(() => {
-    if (!user) return
-
-    const justLoggedIn = sessionStorage.getItem("justLoggedIn")
-    if (!justLoggedIn) return
-
-    sessionStorage.removeItem("justLoggedIn")
-
-    Swal.fire({
-      title: "Signed in",
-      text: "You have been successfully logged in",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    })
-  }, [user])
-
-  useEffect(() => {
-    if (user) {
-      setBusy(false)
-    }
-  }, [user])
-
-  const handleLogin = async () => {
-    setBusy(true)
-    try {
-      sessionStorage.setItem("justLoggedIn", "true")
-      await signInWithGoogle()
-    } catch (err) {
-      console.error("Login error", err)
-      sessionStorage.removeItem("justLoggedIn")
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to sign in",
-        icon: "error",
-      })
-      setBusy(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    const result = await Swal.fire({
-      title: "Sign out?",
-      text: "You will be logged out from your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, sign out",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#4f46e5",
-      cancelButtonColor: "#6b7280",
-    })
-
-    if (!result.isConfirmed) return
-
-    setBusy(true)
-    try {
-      await signOutUser()
-      await Swal.fire({
-        title: "Signed out",
-        text: "You have been successfully logged out",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      })
-    } catch (err) {
-      console.error("Logout error", err)
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to sign out",
-        icon: "error",
-      })
-    } finally {
-      setBusy(false)
-    }
-  }
+  const { busy, login, logout } = useAuthActions(user)
 
   if (loading) return null
 
   if (user) {
     return (
       <button
-        onClick={handleLogout}
+        onClick={logout}
         disabled={busy}
-        className="flex items-center px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm disabled:opacity-60 cursor-pointer"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-60 hover:bg-indigo-700 transition-colors"
       >
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
         <span className="hidden md:block">Sign out</span>
-        <LogOut className="w-4 h-4 ml-1" />
       </button>
     )
   }
 
   return (
     <button
-      onClick={handleLogin}
+      onClick={login}
       disabled={busy}
-      className="flex items-center px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm disabled:opacity-60 cursor-pointer"
+      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-60 hover:bg-indigo-700 transition-colors"
     >
-      <LogIn className="w-4 h-4 mr-1" />
-      <span className="hidden md:block">Sign in with Google</span>
+      {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+      <span className="hidden md:block">Sign in</span>
     </button>
   )
 }

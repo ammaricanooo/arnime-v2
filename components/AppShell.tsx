@@ -1,100 +1,81 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Header from './Header'
 import Sidebar from './Sidebar'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import BottomNav from './BottomNav'
+import { ROUTES } from '@/lib/constants'
 
-interface AppShellProps {
-  children: React.ReactNode
+function getActiveTab(pathname: string, type: string | null): string {
+  if (pathname === '/') return type === 'complete' ? 'complete' : 'home'
+  if (pathname.startsWith('/schedule')) return 'schedule'
+  if (pathname.startsWith('/favorites')) return 'favorites'
+  if (pathname.startsWith('/watchhistory')) return 'watchhistory'
+  if (pathname.startsWith('/watchparty')) return 'watchparty'
+  if (pathname.startsWith('/livetv')) return 'livetv'
+  if (pathname.startsWith('/comic')) return 'comic'
+  if (pathname.startsWith('/settings')) return 'settings'
+  return 'home'
 }
 
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const pathname = usePathname() || '/'
+
+  const pathname = usePathname() ?? '/'
   const searchParams = useSearchParams()
   const router = useRouter()
+  const type = searchParams?.get('type') ?? null
 
-  const type = searchParams?.get('type')
-
-  const getActiveTab = () => {
-    if (pathname === '/' || pathname === '') {
-      return type === 'complete' ? 'complete' : 'home'
-    }
-
-
-    if (pathname.startsWith('/schedule')) return 'schedule'
-    if (pathname.startsWith('/favorites')) return 'favorites'
-    if (pathname.startsWith('/watchhistory')) return 'watchhistory'
-    if (pathname.startsWith('/livetv')) return 'livetv'
-    if (pathname.startsWith('/comic')) return 'comic'
-    if (pathname.startsWith('/settings')) return 'settings'
-
-    return 'home'
-  }
-
-  const [activeTab, setActiveTab] = useState<string>(getActiveTab())
+  const [activeTab, setActiveTab] = useState(() => getActiveTab(pathname, type))
 
   useEffect(() => {
-    setActiveTab(getActiveTab())
-    // close mobile sidebar on route change
+    setActiveTab(getActiveTab(pathname, type))
     setSidebarOpen(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, type])
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
-    if (tab === 'home') {
-      router.push('/')
-    } else if (tab === 'complete') {
-      router.push('/?type=complete')
-    } else if (tab === 'schedule') {
-      router.push('/schedule')
-    } else if (tab === 'favorites') {
-      router.push('/favorites')
-    } else if (tab === 'watchhistory') {
-      router.push('/watchhistory')
-    } else if (tab === 'livetv') {
-      router.push('/livetv')
-    } else if (tab === 'comic') {
-      router.push('/comic')
-    } else if (tab === 'settings') {
-      router.push('/settings')
-    }
-    if (window.innerWidth < 768) setSidebarOpen(false)
+    router.push(ROUTES[tab] ?? '/')
+    setSidebarOpen(false)
   }
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
-      <Sidebar 
-        activeTab={activeTab} 
-        onTabChange={handleTabChange} 
-        isOpen={sidebarOpen} 
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
       />
 
-      <div className="flex-1 flex flex-col">
-        <Header 
-          searchQuery={searchQuery} 
-          onSearchChange={setSearchQuery} 
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSidebarToggle={() => setSidebarCollapsed((v) => !v)}
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        <main className="relative flex-1 overflow-y-auto custom-scroll">
-          <div className="w-full py-8 px-4 md:px-8">
+        <main className="flex-1 overflow-y-auto custom-scroll">
+          <div className="w-full px-3 py-4 pb-20 md:px-8 md:py-8 md:pb-8">
             {children}
           </div>
         </main>
       </div>
 
       {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/40 z-30 md:hidden" />
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          aria-hidden="true"
+        />
       )}
+
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   )
 }

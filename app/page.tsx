@@ -1,135 +1,98 @@
-"use client";
-import GenreFilter from "@/components/GenreFilter";
-import ContentGrid from "@/components/ContentGrid";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from 'next/navigation'
-import { Loader2 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { doc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
-import useAuth from "@/lib/useAuth";
-import Swal from 'sweetalert2'
+"use client"
 
-interface Genre {
-  name: string
-  slug: string
-}
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
+import { Loader2 } from "lucide-react"
+import { db } from "@/lib/firebase"
+import { doc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore"
+import useAuth from "@/lib/useAuth"
+import GenreFilter from "@/components/GenreFilter"
+import ContentGrid from "@/components/ContentGrid"
+import PageHeader from "@/components/ui/PageHeader"
+import HeroSlider, { type SliderItem } from "@/components/HeroSlider"
+import { fetchJson } from "@/lib/fetchJson"
+import { API, MAX_PAGES } from "@/lib/constants"
+import type { AnimeItem } from "@/lib/types"
+import Swal from "sweetalert2"
 
-interface AnimeData {
-  title: string
-  slug: string
-  poster: string
-  current_episode?: string
-  release_day?: string
-  total_episode?: string
-  rating?: string
-  episode_count?: string
-  season?: string
-  studio?: string
-  newest_release_date: string
-}
+interface Genre { name: string; slug: string }
 
-const MAX_PAGES = 3
-
-export default function Home() {
-  const { user } = useAuth();
+export default function HomePage() {
+  const { user } = useAuth()
   const searchParams = useSearchParams()
-  const tabType = searchParams?.get('type') || ''
-  const currentTab = tabType === 'complete' ? 'complete' : 'home'
-  const [selectedGenre, setSelectedGenre] = useState('All')
-  const [genres, setGenres] = useState<string[]>(['All'])
-  const [genreMap, setGenreMap] = useState<{ [key: string]: string }>({})
-  const [animes, setAnimes] = useState<AnimeData[]>([])
+  const isComplete = searchParams?.get("type") === "complete"
+
+  const [genres, setGenres] = useState<string[]>(["All"])
+  const [genreMap, setGenreMap] = useState<Record<string, string>>({})
+  const [selectedGenre, setSelectedGenre] = useState("All")
+  const [animes, setAnimes] = useState<AnimeItem[]>([])
+  const [sliderItems, setSliderItems] = useState<SliderItem[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingGenres, setLoadingGenres] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [likedAnimes, setLikedAnimes] = useState<string[]>([])
-  const observerTarget = useRef<HTMLDivElement>(null)
+  const observerRef = useRef<HTMLDivElement>(null)
 
+  // Fetch user bookmarks
   useEffect(() => {
-    const fetchUserLikes = async () => {
-      if (user) {
-        try {
-          const q = query(collection(db, "bookmarks"), where("userId", "==", user.uid));
-          const querySnapshot = await getDocs(q);
-          const slugs = querySnapshot.docs.map(doc => doc.data().slug);
-          setLikedAnimes(slugs);
-        } catch (error) {
-          console.error("Error fetching likes from Firestore:", error);
-        }
-      } else {
-        setLikedAnimes([]);
-      }
-    };
-    fetchUserLikes();
-  }, [user]);
+    if (!user) { setLikedAnimes([]); return }
+    getDocs(query(collection(db, "bookmarks"), where("userId", "==", user.uid)))
+      .then((snap) => setLikedAnimes(snap.docs.map((d) => d.data().slug)))
+      .catch(() => {})
+  }, [user])
 
+  // Fetch genres once
   useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const { fetchJson } = await import('../lib/fetchJson')
-        const data = await fetchJson('https://api.ammaricano.my.id/api/otakudesu/genre')
-        if (data.result && Array.isArray(data.result)) {
-          const genreNames = ['All', ...data.result.map((genre: Genre) => genre.name)]
-          const slugMap: { [key: string]: string } = {}
-          data.result.forEach((genre: Genre) => {
-            slugMap[genre.name] = genre.slug
-          })
-          setGenres(genreNames)
-          setGenreMap(slugMap)
-        }
-      } catch (error) {
-        console.error('Error fetching genres:', error)
-        setGenres(['All', 'Action', 'Adventure', 'Comedy', 'Drama'])
-      } finally {
-        setLoadingGenres(false)
-      }
-    }
-
-    fetchGenres()
+    fetchJson<{ result: Genre[] }>(API.otakudesu.genre)
+      .then(({ result }) => {
+        setGenres(["All", ...result.map((g) => g.name)])
+        setGenreMap(Object.fromEntries(result.map((g) => [g.name, g.slug])))
+      })
+      .catch(() => setGenres(["All", "Action", "Adventure", "Comedy", "Drama"]))
+      .finally(() => setLoadingGenres(false))
   }, [])
 
-  const fetchAnimes = useCallback(async (page: number, isLoadMore: boolean = false, genre: string = 'All') => {
-    if (page > MAX_PAGES) {
-      setHasMore(false)
-      return
-    }
+  const fetchAnimes = useCallback(
+    async (page: number, append = false, genre = "All") => {
+      if (page > MAX_PAGES) { setHasMore(false); return }
+      setLoading(true)
+      try {
+        const url =
+          genre !== "All"
+            ? API.otakudesu.byGenre(genreMap[genre] ?? genre.toLowerCase(), page)
+            : API.otakudesu.list(isComplete ? "complete" : "ongoing", page)
 
-    setLoading(true)
-    try {
-      let url: string
-      if (genre && genre !== 'All') {
-        const genreSlug = genreMap[genre] || genre.toLowerCase()
-        url = `https://api.ammaricano.my.id/api/otakudesu/animebygenre?genre=${genreSlug}&page=${page}`
-      } else {
-        const animeType = currentTab === 'home' ? 'ongoing' : 'complete'
-        url = `https://api.ammaricano.my.id/api/otakudesu?type=${animeType}&page=${page}`
-      }
-
-      const { fetchJson } = await import('../lib/fetchJson')
-      const data = await fetchJson(url)
-
-      if (data && data.result && Array.isArray(data.result)) {
-        if (isLoadMore) {
-          setAnimes(prev => [...prev, ...data.result])
-        } else {
-          setAnimes(data.result)
+        const data = await fetchJson<{ result: AnimeItem[] }>(url)
+        if (data?.result) {
+          const results = data.result
+          if (!append) {
+            // Build slider from first page — pick up to 6 with a poster
+            const picks = results
+              .filter((a) => a.poster)
+              .slice(0, 6)
+              .map<SliderItem>((a) => ({
+                slug: a.slug,
+                title: a.title,
+                poster: a.poster,
+                badge: a.current_episode ? `Ep ${a.current_episode}` : a.total_episode ? `${a.total_episode} Eps` : undefined,
+                badgeColor: 'bg-indigo-600',
+                subtitle: a.studio ?? a.release_day,
+                type: 'anime',
+              }))
+            setSliderItems(picks)
+          }
+          setAnimes((prev) => (append ? [...prev, ...results] : results))
+          setHasMore(page < MAX_PAGES && results.length > 0)
         }
-        setHasMore(page < MAX_PAGES && data.result.length > 0)
+      } catch {
+        // keep existing data
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching animes:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [tabType, genreMap, currentTab])
-
-  useEffect(() => {
-    setCurrentPage(1)
-    setAnimes([])
-    setHasMore(true)
-    setSelectedGenre('All')
-  }, [tabType, fetchAnimes])
+    },
+    [isComplete, genreMap]
+  )
 
   useEffect(() => {
     setCurrentPage(1)
@@ -138,123 +101,100 @@ export default function Home() {
     fetchAnimes(1, false, selectedGenre)
   }, [selectedGenre, fetchAnimes])
 
+  // Infinite scroll
   useEffect(() => {
+    const el = observerRef.current
+    if (!el) return
     const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !loading && animes.length > 0) {
-          const nextPage = currentPage + 1
-          if (nextPage <= MAX_PAGES) {
-            setCurrentPage(nextPage)
-            fetchAnimes(nextPage, true, selectedGenre)
-          }
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !loading && animes.length > 0) {
+          const next = currentPage + 1
+          setCurrentPage(next)
+          fetchAnimes(next, true, selectedGenre)
         }
       },
       { threshold: 0.1 }
     )
-    if (observerTarget.current) observer.observe(observerTarget.current)
+    observer.observe(el)
     return () => observer.disconnect()
   }, [hasMore, loading, currentPage, animes.length, selectedGenre, fetchAnimes])
 
   const handleLike = async (slug: string) => {
     if (!user) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "You need to login first to save your favorite anime!"
-      });
-      return;
+      Swal.fire({ icon: "error", title: "Login required", text: "Sign in to save favorites." })
+      return
     }
-
-    const isAlreadyLiked = likedAnimes.includes(slug);
-    const docId = `${user.uid}_${slug}`;
-    const docRef = doc(db, "bookmarks", docId);
-
+    const isLiked = likedAnimes.includes(slug)
+    const ref = doc(db, "bookmarks", `${user.uid}_${slug}`)
     try {
-      if (isAlreadyLiked) {
-        await deleteDoc(docRef);
-        setLikedAnimes(prev => prev.filter(s => s !== slug));
+      if (isLiked) {
+        await deleteDoc(ref)
+        setLikedAnimes((prev) => prev.filter((s) => s !== slug))
       } else {
-        const animeToSave = animes.find(a => a.slug === slug);
-
-        setLikedAnimes(prev => [...prev, slug]);
-
-        await setDoc(docRef, {
+        const anime = animes.find((a) => a.slug === slug)
+        setLikedAnimes((prev) => [...prev, slug])
+        await setDoc(ref, {
           userId: user.uid,
-          slug: slug,
-          title: animeToSave?.title || "Unknown Title",
-          poster: animeToSave?.poster || "",
-          type: currentTab === 'complete' ? 'complete' : 'ongoing',
-          createdAt: new Date().toISOString()
-        });
+          slug,
+          title: anime?.title ?? "",
+          poster: anime?.poster ?? "",
+          type: isComplete ? "complete" : "ongoing",
+          createdAt: new Date().toISOString(),
+        })
       }
-    } catch (error) {
-      console.error("Firestore Error:", error);
-      if (!isAlreadyLiked) setLikedAnimes(prev => prev.filter(s => s !== slug));
-      alert("Gagal menyimpan ke favorit.");
+    } catch {
+      if (!isLiked) setLikedAnimes((prev) => prev.filter((s) => s !== slug))
     }
-  };
+  }
+
+  const title =
+    selectedGenre !== "All"
+      ? selectedGenre
+      : isComplete
+      ? "Completed Anime"
+      : "Ongoing Anime"
+
+  // Only show slider on the default tabs (not genre filter)
+  const showSlider = selectedGenre === "All" && sliderItems.length > 0
 
   return (
     <>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div className="w-full md:w-auto">
-          {/* Skeleton untuk Judul */}
-          {loading && animes.length === 0 ? (
-            <div className="animate-pulse space-y-2">
-              <div className="h-8 md:h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-              <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800/50 rounded" />
-            </div>
-          ) : (
-            <>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                {selectedGenre !== 'All' ? selectedGenre : (
-                  currentTab === 'home' ? 'Ongoing Anime' : 'Completed Anime'
-                )}
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
-                Browse and discover your favorite anime content
-              </p>
-            </>
-          )}
-        </div>
+      {/* Hero slider — only on home/complete tabs, not genre filter */}
+      {showSlider && <HeroSlider items={sliderItems} />}
 
-        {/* Skeleton untuk Genre Filter */}
-        {loadingGenres ? (
-          <div className="flex gap-2 animate-pulse overflow-hidden w-full md:w-auto">
-              <div className="h-10 w-50 bg-slate-200 dark:bg-slate-800 rounded shrink-0" />
-          </div>
-        ) : (
-          <GenreFilter
-            genres={genres}
-            selectedGenre={selectedGenre}
-            onSelectGenre={setSelectedGenre}
-          />
-        )}
-      </div>
+      <PageHeader
+        title={loading && animes.length === 0 ? "" : title}
+        description={loading && animes.length === 0 ? "" : "Browse and discover your favorite anime"}
+        action={
+          loadingGenres ? (
+            <div className="h-9 w-44 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ) : (
+            <GenreFilter
+              genres={genres}
+              selectedGenre={selectedGenre}
+              onSelectGenre={setSelectedGenre}
+            />
+          )
+        }
+      />
 
       <ContentGrid
         animes={animes}
         onLike={handleLike}
         likedAnimes={likedAnimes}
-        type={currentTab === 'home' ? 'ongoing' : 'complete'}
+        type={isComplete ? "complete" : "ongoing"}
         loading={loading}
-        hasMore={false} // Kita pakai observerTarget di bawah untuk infinite scroll
+        hasMore={false}
       />
 
-      {/* Target untuk Infinite Scroll */}
-      <div ref={observerTarget} className="flex justify-center py-12">
+      <div ref={observerRef} className="flex justify-center py-10">
         {loading && animes.length > 0 && (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-            <p className="text-xs text-slate-500 animate-pulse font-medium">Memuat lebih banyak...</p>
-          </div>
+          <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
         )}
       </div>
 
       {!loading && animes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">No anime found</p>
-        </div>
+        <div className="text-center py-20 text-slate-500">No anime found</div>
       )}
     </>
   )

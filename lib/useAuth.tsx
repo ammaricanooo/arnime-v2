@@ -9,14 +9,14 @@ export default function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    handleRedirectResult().catch(console.error)
+    handleRedirectResult()
 
     const unsub = onAuthChange((u) => {
       setUser(u)
       setLoading(false)
     })
 
-    return () => unsub()
+    return unsub
   }, [])
 
   return { user, loading }

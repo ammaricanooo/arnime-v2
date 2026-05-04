@@ -56,3 +56,48 @@ body {
   max-width: 100vw !important;
   overflow-x: hidden !important;
 }
+
+/* ===== MOBILE / PWA IMPROVEMENTS ===== */
+
+/* Safe area support for notch & home indicator (iOS) */
+:root {
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+/* Bottom nav safe area padding */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better touch targets */
+button, a {
+  touch-action: manipulation;
+}
+
+/* Prevent horizontal overflow on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Prevent SVG from overflowing its container */
+img[src$=".svg"] {
+  max-width: 100%;
+  max-height: 100%;
+}

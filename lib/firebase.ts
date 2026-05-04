@@ -4,8 +4,8 @@ import { initializeApp, getApps } from "firebase/app"
 import {
   getAuth,
   GoogleAuthProvider,
+  GithubAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
   onAuthStateChanged,
   getRedirectResult,
@@ -27,19 +27,19 @@ if (!getApps().length) {
 }
 
 export const auth = getAuth()
-export const provider = new GoogleAuthProvider()
+export const googleProvider = new GoogleAuthProvider()
+export const githubProvider = new GithubAuthProvider()
 export const db = getFirestore()
 
+// Keep backward-compat export
+export const provider = googleProvider
+
 export async function signInWithGoogle() {
-  const isMobile =
-    typeof window !== "undefined" &&
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  return signInWithPopup(auth, googleProvider)
+}
 
-  if (isMobile) {
-    return signInWithPopup(auth, provider)
-  }
-
-  return signInWithPopup(auth, provider)
+export async function signInWithGithub() {
+  return signInWithPopup(auth, githubProvider)
 }
 
 export async function signOutUser() {
@@ -53,7 +53,7 @@ export function onAuthChange(callback: (user: User | null) => void) {
 export async function handleRedirectResult() {
   try {
     return await getRedirectResult(auth)
-  } catch (err) {
-    console.error("Redirect error:", err)
+  } catch {
+    // non-critical
   }
 }

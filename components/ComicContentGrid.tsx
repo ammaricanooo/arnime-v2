@@ -2,28 +2,10 @@
 
 import { BookOpen, Loader2, Trash2, Heart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import type { Comic } from '@/lib/types'
+import CardSkeleton from './CardSkeleton'
 
-export interface Comic {
-  title: string
-  link: string
-  thumb?: string
-  image?: string
-  genre?: string
-  latest_chapter?: string
-  info?: string
-  chapter?: string
-  is_colored?: boolean
-  type?: string
-  update?: string
-  readers?: string
-  time?: string
-  extra?: string
-  description?: string
-  firstChapter?: string
-  firstChapterLink?: string
-  latestChapter?: string
-  latestChapterLink?: string
-}
+export type { Comic }
 
 interface ComicContentGridProps {
   comics: Comic[]
@@ -35,136 +17,94 @@ interface ComicContentGridProps {
   variant?: 'default' | 'history'
 }
 
-// --- Skeleton Loader Component ---
-const ComicCardSkeleton = () => (
-  <div className="animate-pulse space-y-3">
-    <div className="aspect-3/4 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-  </div>
-)
+function getSlug(link: string) {
+  return link.split('/').filter(Boolean).pop() ?? ''
+}
 
 export default function ComicContentGrid({
   comics,
   onLike = () => {},
   likedComics = [],
   loading = false,
-  hasMore = true,
+  hasMore = false,
   onLoadMore,
   variant = 'default',
 }: ComicContentGridProps) {
   const router = useRouter()
 
-  const getDisplayInfo = (comic: Comic): { badge: string; badgeColor: string } => {
-    if (comic.readers) {
-      return { badge: `${comic.readers}`, badgeColor: 'bg-linear-to-r from-indigo-600 to-indigo-700/0' }
-    }
-    if (comic.update) {
-      return { badge: comic.update, badgeColor: 'bg-linear-to-r from-indigo-600 to-indigo-700/0' }
-    }
-    return { badge: 'N/A', badgeColor: 'bg-slate-600' }
-  }
-
   return (
     <div className="w-full">
-      {/* Grid Comics - Responsive */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
-        {/* State Loading Awal */}
-        {loading && comics.length === 0 ? (
-          Array.from({ length: 10 }).map((_, i) => <ComicCardSkeleton key={i} />)
-        ) : (
-          comics.map((comic) => {
-            const slug = comic.link.split('/').filter(Boolean).pop() || ''
-            const posterUrl = comic.image || comic.thumb || "/placeholder.svg"
-            const { badge, badgeColor } = getDisplayInfo(comic)
-            const isLiked = likedComics.includes(slug)
-            const topBadgeText = comic.time || comic.update
-            const showBadge = !!topBadgeText || badge !== 'N/A'
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+        {loading && comics.length === 0
+          ? Array.from({ length: 10 }, (_, i) => <CardSkeleton key={i} />)
+          : comics.map((comic) => {
+              const slug = getSlug(comic.link)
+              const poster = comic.image || comic.thumb || '/placeholder.svg'
+              const isLiked = likedComics.includes(slug)
+              const badge = comic.time || comic.update
 
-            return (
-              <div
-                key={comic.link}
-                onClick={() => router.push(`/comic/${slug}`)}
-                className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-xl md:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-slate-100 dark:border-slate-800"
-              >
-                {/* Image Container */}
-                <div className="relative aspect-3/4 overflow-hidden">
-                  <img
-                    src={posterUrl}
-                    alt={comic.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
+              return (
+                <article
+                  key={comic.link}
+                  onClick={() => router.push(`/comic/${slug}`)}
+                  className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border border-slate-100 dark:border-slate-800"
+                >
+                  <div className="relative aspect-3/4 overflow-hidden">
+                    <img
+                      src={poster}
+                      alt={comic.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
 
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
-                  {/* Book Icon on Hover */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform">
-                      <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                        <BookOpen className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onLike(slug) }}
+                      className="absolute top-2 right-2 p-1.5 bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-lg transition-all z-10"
+                      aria-label={variant === 'history' ? 'Remove from history' : 'Toggle favorite'}
+                    >
+                      {variant === 'history' ? (
+                        <Trash2 className="w-3.5 h-3.5 text-white hover:text-red-400" />
+                      ) : (
+                        <Heart className={`w-3.5 h-3.5 transition-all ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+                      )}
+                    </button>
+
+                    {badge && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-indigo-600 rounded-md text-[10px] font-bold text-white">
+                        {badge}
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                      <h3 className="font-semibold text-white text-xs line-clamp-2 leading-tight">
+                        {comic.title}
+                      </h3>
+                      {comic.genre && (
+                        <p className="text-[10px] text-slate-300 mt-0.5 line-clamp-1">{comic.genre}</p>
+                      )}
                     </div>
                   </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onLike(slug)
-                    }}
-                    className="absolute top-2 right-2 p-2 bg-white/10 backdrop-blur-md hover:bg-white/20 rounded-xl transition-all z-10"
-                  >
-                    {variant === 'history' ? (
-                      <Trash2 className="w-4 h-4 text-white hover:text-red-400" />
-                    ) : (
-                      <Heart
-                        className={`w-4 h-4 transition-all ${isLiked ? "fill-red-500 text-red-500 scale-110" : "text-white"}`}
-                      />
-                    )}
-                  </button>
-
-                  {/* Badges */}
-                  {showBadge && (
-                    <div className={`absolute top-2 left-2 flex flex-col items-start gap-1 px-2 md:px-3 py-1 ${badgeColor} rounded-md md:rounded-lg text-[8px] md:text-[10px] font-black text-white shadow-lg`}>
-                      {topBadgeText && <span>{topBadgeText}</span>}
-                      {badge !== 'N/A' && <span>{badge.toUpperCase()}</span>}
-                    </div>
-                  )}
-
-
-                  {/* Info Section */}
-                  <div className="absolute bottom-0 left-0 right-0 p-2 md:p-3 space-y-0.5 md:space-y-1">
-                    <h3 className="font-bold text-white text-xs md:text-sm line-clamp-2 leading-tight group-hover:text-indigo-300 transition-colors">
-                      {comic.title}
-                    </h3>
-                    {comic.genre && (
-                      <p className="text-[8px] md:text-[10px] text-slate-300 font-medium opacity-80 line-clamp-1">
-                        {comic.genre}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })
-        )}
+                </article>
+              )
+            })}
       </div>
 
-      {/* Load More Button */}
       {hasMore && onLoadMore && (
-        <div className="flex justify-center mt-8 md:mt-12">
+        <div className="flex justify-center mt-10">
           <button
             onClick={onLoadMore}
             disabled={loading}
-            className="group flex items-center gap-2 md:gap-3 px-6 md:px-8 py-2.5 md:py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-xl md:rounded-2xl hover:border-indigo-500 hover:text-indigo-500 disabled:opacity-50 transition-all font-bold text-xs md:text-sm shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:border-indigo-500 hover:text-indigo-600 disabled:opacity-50 transition-all text-sm font-semibold"
           >
-            {loading ? (
-              <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin text-indigo-500" />
-            ) : (
-              <>
-                Tampilkan Lebih Banyak
-                <div className="w-5 h-5 md:w-6 md:h-6 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                  <BookOpen className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                </div>
-              </>
-            )}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Load More'}
           </button>
         </div>
       )}

@@ -4,23 +4,10 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Download, Share2, Info, Box } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
+import { fetchJson } from '@/lib/fetchJson'
+import type { LengkapDetail } from '@/lib/types'
 
-// Interface khusus untuk tipe "Lengkap" sesuai JSON kamu
-interface DownloadItem {
-  provider: string
-  link: string
-}
-
-interface LengkapItem {
-  title: string
-  resolution: string
-  downloads: DownloadItem[]
-}
-
-interface LengkapDetail {
-  title: string
-  lengkap: LengkapItem[]
-}
+// Interfaces are imported from @/lib/types
 
 export default function FullClientPage({ slug, full }: { slug: string; full: string }) {
   const router = useRouter()
@@ -32,16 +19,15 @@ export default function FullClientPage({ slug, full }: { slug: string; full: str
     const fetchFullData = async () => {
       setLoading(true)
       try {
-        const { fetchJson } = await import('@/lib/fetchJson')
-        const res = await fetchJson(`https://api.ammaricano.my.id/api/otakudesu/lengkap/${encodeURIComponent(full)}`)
+        const res = await fetchJson<{ result: LengkapDetail }>(`https://api.ammaricano.my.id/api/otakudesu/lengkap/${encodeURIComponent(full)}`)
 
         if (res?.result && res?.result.lengkap) {
           setData(res.result)
         } else {
           setError('Data lengkap tidak ditemukan')
         }
-      } catch (err: any) {
-        setError(err.message || 'Gagal memuat data')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat data')
       } finally {
         setLoading(false)
       }
