@@ -1,9 +1,9 @@
 'use client'
 
 import {
-  House, Flame, GalleryVertical, Users,
+  House, GalleryVertical, Users,
   MoreHorizontal, Calendar, Tv, History,
-  Settings, Star, LogIn, LogOut, X,
+  Settings, Star, LogIn, LogOut, X, Download,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import useAuth from '@/lib/useAuth'
@@ -18,18 +18,19 @@ interface BottomNavProps {
 // Items always visible in the bottom bar
 const PRIMARY_ITEMS = [
   { id: 'home', label: 'Home', icon: House },
-  { id: 'complete', label: 'Complete', icon: Flame },
   { id: 'comic', label: 'Comic', icon: GalleryVertical },
-  { id: 'watchparty', label: 'Party', icon: Users },
+  { id: 'livetv', label: 'Live TV', icon: Tv },
+  { id: 'watchhistory', label: 'Watch History', icon: History },
+  
 ]
 
 // Items in the "More" drawer
 const MORE_ITEMS = [
   { id: 'schedule', label: 'Schedule', icon: Calendar },
-  { id: 'livetv', label: 'Live TV', icon: Tv },
   { id: 'favorites', label: 'Favorites', icon: Star },
-  { id: 'watchhistory', label: 'Watch History', icon: History },
+  { id: 'watchparty', label: 'Party', icon: Users },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'download', label: 'Download App', icon: Download },
 ]
 
 // Tabs that live in the "More" drawer (for active indicator on the More button)

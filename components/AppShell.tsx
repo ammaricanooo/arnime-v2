@@ -8,7 +8,7 @@ import BottomNav from './BottomNav'
 import { ROUTES } from '@/lib/constants'
 
 function getActiveTab(pathname: string, type: string | null): string {
-  if (pathname === '/') return type === 'complete' ? 'complete' : 'home'
+  if (pathname === '/') return 'home'
   if (pathname.startsWith('/schedule')) return 'schedule'
   if (pathname.startsWith('/favorites')) return 'favorites'
   if (pathname.startsWith('/watchhistory')) return 'watchhistory'
@@ -16,6 +16,7 @@ function getActiveTab(pathname: string, type: string | null): string {
   if (pathname.startsWith('/livetv')) return 'livetv'
   if (pathname.startsWith('/comic')) return 'comic'
   if (pathname.startsWith('/settings')) return 'settings'
+  if (pathname.startsWith('/download')) return 'download'
   return 'home'
 }
 
@@ -61,7 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         />
 
         <main className="flex-1 overflow-y-auto custom-scroll">
-          <div className="w-full px-3 py-4 pb-20 md:px-8 md:py-8 md:pb-8">
+          <div className="relative w-full px-3 py-4 pb-20 md:px-8 md:py-8 md:pb-8">
             {children}
           </div>
         </main>

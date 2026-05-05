@@ -78,7 +78,6 @@ export default function SchedulePage() {
     return (
         <div className="space-y-8 pb-20">
             <div className="relative">
-                <div className="absolute -left-4 top-0 w-1 h-full bg-indigo-600 rounded-full hidden md:block" />
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                     Jadwal Rilis
                 </h1>

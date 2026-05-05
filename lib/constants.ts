@@ -46,7 +46,6 @@ export const MAX_PAGES = 3
 
 export const ROUTES: Record<string, string> = {
   home: '/',
-  complete: '/?type=complete',
   schedule: '/schedule',
   favorites: '/favorites',
   watchhistory: '/watchhistory',
@@ -54,4 +53,5 @@ export const ROUTES: Record<string, string> = {
   comic: '/comic',
   settings: '/settings',
   watchparty: '/watchparty',
+  download: '/download',
 }

@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   },
   description:
     'Arnime adalah website nonton anime sub indo terlengkap. Streaming anime terbaru, daftar anime populer, jadwal rilis episode terbaru, dan informasi lengkap semua genre anime dalam satu tempat.',
-  referrer: 'no-referrer',
   keywords: [
     'nonton anime sub indo',
     'streaming anime terbaru',

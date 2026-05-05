@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  House, Flame, Star, History, Tv, Calendar,
-  LogOut, LogIn, GalleryVertical, Settings, Users,
+  House, Star, History, Tv, Calendar,
+  LogOut, LogIn, GalleryVertical, Settings, Users, Download,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import useAuth from '@/lib/useAuth'
@@ -22,7 +22,6 @@ const MENU_GROUPS = [
     title: 'Anime',
     items: [
       { id: 'home', label: 'Home', icon: House },
-      { id: 'complete', label: 'Complete', icon: Flame },
       { id: 'schedule', label: 'Schedule', icon: Calendar },
     ],
   },
@@ -41,6 +40,7 @@ const BOTTOM_ITEMS = [
   { id: 'watchhistory', label: 'Watch History', icon: History },
   { id: 'watchparty', label: 'Watch Party', icon: Users },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'download', label: 'Download App', icon: Download },
 ]
 
 export default function Sidebar({
