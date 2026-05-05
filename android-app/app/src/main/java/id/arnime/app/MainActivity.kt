@@ -19,6 +19,18 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val APP_URL = "https://arnime.ammaricano.my.id"
+
+        // Domains that must stay inside WebView for OAuth to work correctly.
+        // Firebase Auth uses these for Google & GitHub sign-in popups/redirects.
+        private val OAUTH_DOMAINS = listOf(
+            "accounts.google.com",
+            "github.com",
+            "firebaseapp.com",
+            "firebase.google.com",
+            "identitytoolkit.googleapis.com",
+            "securetoken.googleapis.com",
+            "oauth2.googleapis.com",
+        )
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -56,17 +68,35 @@ class MainActivity : AppCompatActivity() {
             setSupportZoom(false)
             builtInZoomControls = false
             displayZoomControls = false
-            userAgentString = userAgentString.replace("wv", "") // remove WebView tag
+            // Remove "wv" tag so sites don't block WebView user agents
+            userAgentString = userAgentString.replace("wv", "")
         }
 
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            override fun shouldOverrideUrlLoading(
+                view: WebView,
+                request: WebResourceRequest,
+            ): Boolean {
                 val url = request.url.toString()
-                // Open external links in browser, keep internal links in WebView
-                return if (url.startsWith(APP_URL) || url.startsWith("about:")) {
-                    false // handle in WebView
+                val host = request.url.host ?: ""
+
+                // Always handle in WebView:
+                //   • our own app domain
+                //   • OAuth provider domains (Google, GitHub, Firebase)
+                //   • about: / javascript: / data: schemes
+                val isInternal = url.startsWith(APP_URL)
+                    || url.startsWith("about:")
+                    || url.startsWith("javascript:")
+                    || url.startsWith("data:")
+                    || OAUTH_DOMAINS.any { host.endsWith(it) }
+
+                return if (isInternal) {
+                    false // let WebView handle it
                 } else {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    // Open truly external links (e.g. download links) in browser
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    } catch (_: Exception) { /* no handler — ignore */ }
                     true
                 }
             }
@@ -74,8 +104,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
+                // Re-evaluate pull-to-refresh eligibility after each page load
+                updateSwipeRefreshEnabled()
             }
         }
+
+        // Allow popups — Firebase Auth (Google/GitHub) uses window.open() for OAuth
+        webView.settings.setSupportMultipleWindows(true)
+        webView.settings.javaScriptCanOpenWindowsAutomatically = true
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
@@ -83,13 +119,82 @@ class MainActivity : AppCompatActivity() {
                 progressBar.isVisible = newProgress < 100
             }
 
-            // Allow camera/microphone permissions if needed
+            // Grant camera/microphone for video players
             override fun onPermissionRequest(request: PermissionRequest) {
                 request.grant(request.resources)
             }
+
+            // Handle window.open() — used by Firebase Auth OAuth popups
+            override fun onCreateWindow(
+                view: WebView,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: android.os.Message,
+            ): Boolean {
+                val popupWebView = WebView(this@MainActivity).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.userAgentString = view.settings.userAgentString
+                    CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(
+                            v: WebView,
+                            request: WebResourceRequest,
+                        ): Boolean {
+                            val url = request.url.toString()
+                            // When OAuth redirects back to our app, load it in the main WebView
+                            if (url.startsWith(APP_URL)) {
+                                webView.loadUrl(url)
+                                // Close the popup
+                                (v.parent as? android.view.ViewGroup)?.removeView(v)
+                                v.destroy()
+                                return true
+                            }
+                            return false
+                        }
+                    }
+
+                    webChromeClient = object : WebChromeClient() {
+                        // Popup closed by JS (window.close())
+                        override fun onCloseWindow(window: WebView) {
+                            (window.parent as? android.view.ViewGroup)?.removeView(window)
+                            window.destroy()
+                        }
+                    }
+                }
+
+                // Attach popup WebView on top of main layout
+                val container = findViewById<android.view.ViewGroup>(android.R.id.content)
+                val params = android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                )
+                container.addView(popupWebView, params)
+
+                // Connect the new window transport
+                val transport = resultMsg.obj as WebView.WebViewTransport
+                transport.webView = popupWebView
+                resultMsg.sendToTarget()
+                return true
+            }
+
+            override fun onCloseWindow(window: WebView) {
+                (window.parent as? android.view.ViewGroup)?.removeView(window)
+                window.destroy()
+            }
         }
 
-        // Enable cookies
+        // Disable overscroll glow — prevents the "pull-to-refresh" feel on scroll up
+        webView.overScrollMode = android.view.View.OVER_SCROLL_NEVER
+
+        // Disable WebView's own scroll-to-top on status-bar tap (conflicts with SwipeRefresh)
+        webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            // Only allow SwipeRefreshLayout to trigger when WebView is scrolled to the very top
+            swipeRefresh.isEnabled = scrollY == 0
+        }
+
+        // Enable cookies (required for Firebase Auth session persistence)
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
@@ -103,6 +208,13 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener {
             webView.reload()
         }
+        // Start disabled; enabled only when WebView is at the top
+        swipeRefresh.isEnabled = true
+    }
+
+    /** Sync SwipeRefreshLayout enabled state with WebView scroll position. */
+    private fun updateSwipeRefreshEnabled() {
+        swipeRefresh.isEnabled = !webView.canScrollVertically(-1)
     }
 
     // Handle back button — navigate WebView history
