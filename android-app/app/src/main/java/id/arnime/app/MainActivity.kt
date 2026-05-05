@@ -104,8 +104,6 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
-                // Re-evaluate pull-to-refresh eligibility after each page load
-                updateSwipeRefreshEnabled()
             }
         }
 
@@ -188,12 +186,6 @@ class MainActivity : AppCompatActivity() {
         // Disable overscroll glow — prevents the "pull-to-refresh" feel on scroll up
         webView.overScrollMode = android.view.View.OVER_SCROLL_NEVER
 
-        // Disable WebView's own scroll-to-top on status-bar tap (conflicts with SwipeRefresh)
-        webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            // Only allow SwipeRefreshLayout to trigger when WebView is scrolled to the very top
-            swipeRefresh.isEnabled = scrollY == 0
-        }
-
         // Enable cookies (required for Firebase Auth session persistence)
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -208,13 +200,12 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener {
             webView.reload()
         }
-        // Start disabled; enabled only when WebView is at the top
-        swipeRefresh.isEnabled = true
-    }
 
-    /** Sync SwipeRefreshLayout enabled state with WebView scroll position. */
-    private fun updateSwipeRefreshEnabled() {
-        swipeRefresh.isEnabled = !webView.canScrollVertically(-1)
+        // Fix: SwipeRefreshLayout often fails to detect scroll position of WebView when nested.
+        // We explicitly tell it whether the WebView can still scroll up.
+        swipeRefresh.setOnChildScrollUpCallback { _, _ ->
+            webView.canScrollVertically(-1)
+        }
     }
 
     // Handle back button — navigate WebView history

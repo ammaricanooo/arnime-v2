@@ -183,11 +183,6 @@ function EpisodeList({ episodes, currentSlug, animeSlug }: {
   const router = useRouter()
   const activeRef = useRef<HTMLButtonElement>(null)
 
-  // Scroll active episode into view on mount
-  useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [currentSlug])
-
   if (episodes.length === 0) return null
 
   return (
@@ -448,6 +443,7 @@ export default function WatchClientPage({ slug, episode: episodeSlug }: { slug: 
                 </div>
               ) : (
                 <iframe
+                tabIndex={-1}
                   src={iframeSrc ?? 'about:blank'}
                   allowFullScreen
                   className="w-full h-full border-none"
